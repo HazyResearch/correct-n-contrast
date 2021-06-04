@@ -220,11 +220,9 @@ def train_epoch(encoder, classifier, dataloader,
             if scheduler_c is not None:
                 scheduler_c.step()
             optim_e.zero_grad()
-            optim_c.zero_grad()
-#             if args.replicate > 50 or args.replicate in [8, 4, 36, 44]:
-#                 optim_c.zero_grad()  # For replicate < 50, this was also optim_c.zero_grad before, i.e. not zeroing grads?
-#             else:
-#                 optim_c.zero_grad
+            
+            if args.replicate > 50:
+                optim_c.zero_grad()
         
         epoch_losses.append(batch_loss)
         epoch_losses_contrastive.append(batch_loss_contrastive)
