@@ -101,8 +101,11 @@ def init_experiment(args):
     new_results_path = join(args.results_path, args.dataset)
     if not exists(new_model_path):
         os.makedirs(new_model_path)
+    if not exists(new_image_path):
         os.makedirs(new_image_path)
+    if not exists(new_log_path):
         os.makedirs(new_log_path)
+    if not exists(new_results_path):
         os.makedirs(new_results_path)
     # Make more granular - save specific folders per experiment configs
     new_model_path = join(new_model_path, experiment_configs)
@@ -111,13 +114,151 @@ def init_experiment(args):
     new_results_path = join(new_results_path, experiment_configs)
     if not exists(new_model_path):
         os.makedirs(new_model_path)
+    if not exists(new_image_path):
         os.makedirs(new_image_path)
+    if not exists(new_log_path):
         os.makedirs(new_log_path)
+    if not exists(new_results_path):
         os.makedirs(new_results_path)
     args.model_path = new_model_path
     args.image_path = new_image_path
     args.log_path = new_log_path
     args.results_path = new_results_path
+    
+    
+def init_args(args):
+    args.supervised_contrast = True
+    args.prioritize_spurious_pos = False
+    args.full_contrastive = False
+    args.contrastive_type = 'cnc'
+    
+    # Metrics
+    args.compute_auroc = False  # Turn True for certain datasets, e.g. ISIC, CXR8
+    if args.dataset in ['isic', 'cxr8']:
+        args.compute_auroc = True
+
+    # Model
+    args.model_type = f'{args.arch}_cnc'
+    args.criterion = 'cross_entropy'
+    args.pretrained = False
+    
+    ## BERT Defaults
+    args.max_grad_norm = 1.0
+    args.adam_epsilon = 1e-8
+    args.warmup_steps = 0
+    ### Keep these the same for the spurious model
+    args.max_grad_norm_s = 1.0
+    args.adam_epsilon_s = 1e-8
+    args.warmup_steps_s = 0
+    ### And the same for grad-aligned finetuning
+    args.grad_max_grad_norm = 1.0
+    args.grad_adam_epsilon = 1e-8
+    args.grad_warmup_steps = 0
+
+    args.device = torch.device('cuda:0') if torch.cuda.is_available() and not args.no_cuda else torch.device('cpu')
+    print(args.device)
+    
+    # Visualizations
+    args.img_file_type = 'png'
+    args.display_image = False
+    args.image_path = './images'
+
+    # Misc. - can't spell
+    args.log_interval = 1
+    args.log_path = './logs'
+    args.results_path = './results'
+    args.model_path = './model'
+    args.image_path = './images'
+    args.img_file_type = '.png'
+    
+    # Slicing
+    args.loss_factor = 1
+    args.supersample_labels = False
+    args.subsample_labels = False
+    args.weigh_slice_samples_by_loss = True  # just to compute losses
+    
+    # Legacy args here
+    args.val_split = 0.1
+    args.spurious_train_split = 0.2
+    args.subsample_groups = False
+    args.train_method = 'sc'  # Because "slicing" by U-MAP, retrain
+    
+    if args.erm:
+        args.train_method += '-erm'
+        
+    if args.single_pos:
+        args.train_method += '-sp'
+        
+    if args.finetune_epochs > 0:
+        args.train_method += '-fce={args.finetune_epochs}'
+        
+    if args.freeze_encoder:
+        args.train_method += '-f'
+    
+    # Save accuracies
+    args.max_robust_acc = -1
+    args.max_robust_epoch = -1
+    args.max_robust_group_acc = (None, None)
+    
+    
+def update_args(args):
+    args.experiment_name = f'{args.contrastive_type}'
+    
+    if args.dataset == 'colored_mnist':
+        args.experiment_name += f'-cmnist_p{args.p_correlation}-bs_trn_s={args.bs_trn_s}'
+    else:
+        args.experiment_name += f'-{args.dataset}'
+
+    if args.no_projection_head:
+        args.experiment_name += f'-nph'
+        
+    args.experiment_name += f'-sw={args.slice_with[:2]}'
+    args.experiment_name += f'-na={args.num_anchor}-np={args.num_positive}-nn={args.num_negative}-nne={args.num_negative_easy}'
+    if args.weight_anc_by_loss:
+        args.experiment_name += f'-at={args.anc_loss_temp}'
+    if args.weight_pos_by_loss:
+        args.experiment_name += f'-pt={args.pos_loss_temp}'
+    if args.weight_neg_by_loss:
+        args.experiment_name += f'-nt={args.neg_loss_temp}'
+
+    args.experiment_name += f'-tsr={args.target_sample_ratio}-t={args.temperature}'
+
+    if args.hard_negative_factor > 0:
+        args.experiment_name += f'-hnf={args.hard_negative_factor}'
+
+    if args.balance_targets:
+        args.experiment_name += '-bt'
+        
+    if args.resample_class != '':
+        args.experiment_name += f'-rs={args.resample_class[0]}s'
+
+    args.experiment_name += f'-bf={args.batch_factor}-cw={args.contrastive_weight}'
+
+    if args.supervised_linear_scale_up:
+        args.experiment_name += '-slsu'
+        
+    args.experiment_name += f'-sud={args.supervised_update_delay}'
+
+    if args.single_pos:
+        args.experiment_name += '-sp'
+        
+    if args.finetune_epochs > 0:
+        args.experiment_name += f'-fce={args.finetune_epochs}'
+        
+    if args.freeze_encoder:
+        args.experiment_name += '-f'
+
+    model_params = f'-me={args.max_epoch}-bst={args.bs_trn}-o={args.optim}-lr={args.lr}-mo={args.momentum}-wd={args.weight_decay}'
+    model_params += f'-wdc={args.weight_decay_c}'
+    if args.lr_scheduler != '':
+        model_params += f'-lrs={args.lr_scheduler[:3]}'
+    if args.lr_scheduler_classifier != '':
+        model_params += f'-clrs={args.lr_scheduler[:3]}'
+    
+    args.experiment_name += model_params
+
+    args.experiment_name += f'-s={args.seed}-r={args.replicate}'
+    print(f'Updated experiment name: {args.experiment_name}')
     
     
 def update_contrastive_experiment_name(args):
