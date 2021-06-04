@@ -2,7 +2,7 @@
 
 set -e
 cd $(dirname $0)
-git checkout neurips_code
+git checkout neurips21
 cd ..
 rm -f neurips_code_submission.zip
 rm -rf neurips_code_submission/
