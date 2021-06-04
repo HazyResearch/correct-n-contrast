@@ -14,6 +14,20 @@ def compute_entropy(targets):
     return -1 * np.sum([p * np.log(p) for p in probs])
 
 
+def log_label_mutual_info(sliced_data_indices, ):
+    print(f'len(sliced_data_indices): {len(sliced_data_indices)}')
+    # Report empirical MI(Y | Z_s) = \sum_{z_s} (H(Y) - H(Y | Z_s = z_s))
+    print_header('Resampled MI', style='top')
+    mi_by_slice = compute_mutual_info_by_slice(train_loader,
+                                               sliced_data_indices)
+    for ix, mi in enumerate(mi_by_slice):
+        print(f'H(Y) - H(Y | Z = z_{ix}) = {mi:<.3f} (by slice)')
+    mi_resampled = compute_resampled_mutual_info(train_loader,
+                                                 sliced_data_indices)
+    print_header(f'H(Y) - H(Y | Z) = {mi_resampled:<.3f}')
+    args.mi_resampled = mi_resampled
+
+
 def compute_mutual_info_by_slice(dataloader, sliced_data_indices):
     mutual_info_by_slice = []
     for indices in sliced_data_indices:
@@ -57,6 +71,3 @@ def compute_roc_auc(targets, probs):
     except ValueError:
         auroc = -1
     return auroc
-
-
-# python train_supervised_contrast_2.py --arch resnet50_pt --dataset isic --slice_with rep --rep_cluster_method gmm --pretrained_spurious_path "./model/isic/config/cp-a=resnet50_pt-d=isic-tm=2s2s_spur-sc-me=100-bst=32-lr=0.0001-mo=0.9-wd=1.0--spur-bs_trn=32-lr=0.0001-mo=0.9-wd=1.0-rc=subsample-s=0-cpe=9-cpb=0.pth.tar" --num_positive 64 --num_negative 64 --num_anchor 64 --batch_factor 32 --train_encoder --target_sample_ratio 1.0 --temperature 0.1 --lr 1e-4 --momentum 0.9 --weight_decay 1e-3 --stopping_window 32 --log_loss_interval 10 --checkpoint_interval 100000 --log_visual_interval 400000 --verbose --no_projection_head --contrastive_weight 0.75 -cs apn --seed 0 --replicate 0 --num_negative_easy 0 --max_epoch 100 --resample_class subsample --replicate 12 --num_negative_easy 64

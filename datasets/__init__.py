@@ -6,33 +6,20 @@ import numpy as np
 import importlib
 
 
-def get_data_args(required_args, args):
-    """
-    Initialize dictionary of required arguments for passing into
-    functions with **kwargs
-
-    Args:
-    - required_args (str[]): List of arguments, e.g. ['n', 'p_correlation']
-    - args (argparse.ArgumentParser): Experiment arguments
-    """
-    data_args = {}
-    for argname in required_args:
-        argval = getattr(args, argname)
-        assert argval is not None, f'{argname} must be specified'
-        data_args[argname] = argval
-    return data_args
-
-
 def initialize_data(args):
     """
     Set dataset-specific arguments
-    - Should change the `args.root_dir` to the paths where the data is stored
+    By default, the args.root_dir below should work ifinstalling datasets as
+    specified in the README to the specified locations
+    - Otherwise, change `args.root_dir` to the path where the data is stored.
     """
     dataset_module = importlib.import_module(f'datasets.{args.dataset}')
     load_dataloaders = getattr(dataset_module, 'load_dataloaders')
     visualize_dataset = getattr(dataset_module, 'visualize_dataset')
+    
     if 'waterbirds' in args.dataset:
         args.root_dir = './datasets/data/Waterbirds/'
+        args.root_dir = '/dfs/scratch1/mzhang/projects/slice-and-dice-smol/datasets/data/Waterbirds'
         args.target_name = 'waterbird_complete95'
         args.confounder_names = ['forest2water2']
         args.image_mean = np.mean([0.485, 0.456, 0.406])
@@ -51,31 +38,12 @@ def initialize_data(args):
         args.image_std = 0.5
         args.augment_data = False
         # args.train_classes = args.train_classes
-            
-    elif 'isic' in args.dataset:
-        args.root_dir = './datasets/data/ISIC/'
-        args.target_name = 'benign_malignant'
-        args.confounder_names = ['patch']
-        args.image_mean = np.mean([0.71826, 0.56291, 0.52548])
-        args.image_std = np.mean([0.16318, 0.14502, 0.17271])
-        args.augment_data = False
-        args.image_path = './images/isic/'
-        args.train_classes = ['benign', 'malignant']
-        
-    elif 'cxr' in args.dataset:
-        args.root_dir = '/dfs/scratch1/ksaab/data/4tb_hdd/CXR'
-        args.target_name = 'pmx'
-        args.confounder_names = ['chest_tube']
-        args.image_mean = 0.48865
-        args.image_std = 0.24621
-        args.augment_data = False
-        args.image_path = './images/cxr/'
-        args.train_classes = ['no_pmx', 'pmx']
     
     elif 'celebA' in args.dataset:
-        args.root_dir = '/dfs/scratch0/nims/CelebA/celeba/' # 'img_align_celeba'
-        # IMPORTANT - dataloader assumes that we have directory structure:
-        # /dfs/scratch0/nims/CelebA/celeba/
+        args.root_dir = '/dfs/scratch0/nims/CelebA/celeba/' 
+        # args.root_dir = './datasets/data/CelebA/'
+        # IMPORTANT - dataloader assumes that we have directory structure
+        # in ./datasets/data/CelebA/ :
         # |-- list_attr_celeba.csv
         # |-- list_eval_partition.csv
         # |-- img_align_celeba/
@@ -87,19 +55,9 @@ def initialize_data(args):
         args.image_mean = np.mean([0.485, 0.456, 0.406])
         args.image_std = np.mean([0.229, 0.224, 0.225])
         args.augment_data = False
-        args.image_path = './images/celebA/'  # img_align_celeba
+        args.image_path = './images/celebA/'
         args.train_classes = ['blond', 'nonblond']
         args.val_split = 0.2
-        
-    elif 'multinli' in args.dataset:
-        args.root_dir = './datasets/data/MultiNLI/'
-        args.target_name = 'gold_label_random'
-        args.confounder_names = ['sentence2_has_negation']
-        args.image_mean = 0
-        args.image_std = 0
-        args.augment_data = False
-        args.image_path = './images/multinli/'
-        args.train_classes = ['contradiction', 'entailment', 'neutral']
         
     elif 'civilcomments' in args.dataset:
         args.root_dir = './datasets/data/CivilComments/'
@@ -112,7 +70,7 @@ def initialize_data(args):
         args.train_classes = ['non_toxic', 'toxic']
         args.max_token_length = 300
     
-    args.task = args.dataset  # e.g. 'mnli', for BERT
+    args.task = args.dataset  # e.g. 'civilcomments', for BERT
     args.num_classes = len(args.train_classes)
     return load_dataloaders, visualize_dataset
 
@@ -140,8 +98,8 @@ def train_val_split(dataset, val_split, seed):
 def get_resampled_indices(dataloader, args, sampling='subsample', seed=None):
     """
     Args:
-    - dataloader: ex. single_bg_loaders['Water bg']
-    - sampling: 'subsample' or 'upsample'
+    - dataloader (torch.utils.data.DataLoader): 
+    - sampling (str): 'subsample' or 'upsample'
     """
     try:
         indices = dataloader.sampler.indices
@@ -189,7 +147,7 @@ def get_resampled_set(dataset, resampled_set_indices, copy_dataset=False):
     - deepcopy (bool): If true, copy the dataset
     """
     resampled_set = copy.deepcopy(dataset) if copy_dataset else dataset
-    try:  # Waterbirds things
+    try:  # Some dataset classes may not have these attributes
         resampled_set.y_array = resampled_set.y_array[resampled_set_indices]
         resampled_set.group_array = resampled_set.group_array[resampled_set_indices]
         resampled_set.split_array = resampled_set.split_array[resampled_set_indices]
@@ -199,7 +157,6 @@ def get_resampled_set(dataset, resampled_set_indices, copy_dataset=False):
         except:
             resampled_set.x_array = resampled_set.x_array[resampled_set_indices]
     except AttributeError as e:
-        # print(e)
         try:
             resampled_set.targets = resampled_set.targets[resampled_set_indices]
         except:
@@ -209,7 +166,6 @@ def get_resampled_set(dataset, resampled_set_indices, copy_dataset=False):
             resampled_set.df = resampled_set.df.iloc[resampled_set_indices]
         except AttributeError:
             pass
-            # resampled_set.data = resampled_set.data[resampled_set_indices]
             
         try:
             resampled_set.data = resampled_set.data[resampled_set_indices]

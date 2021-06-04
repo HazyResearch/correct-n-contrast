@@ -39,7 +39,6 @@ def summarize_acc(correct_by_groups, total_by_groups, stdout=True):
 def initialize_csv_metrics(args):
     test_metrics = {'epoch': [], 'target': [], 'spurious': [],
                     'acc': [], 'loss': [], 'model_type': [], 
-                    'mutual_info_y_z': [],
                     'robust_acc': [], 'max_robust_acc': []}
     args.test_metrics = test_metrics
     args.max_robust_acc = 0
