@@ -125,12 +125,6 @@ def train_epoch(encoder, classifier, dataloader,
                 loss = contrastive_loss(encoder, contrastive_batch)
                 loss *= ((1 - supervised_weight) / 
                          (len(inputs_a_) * len(batch_inputs)))
-                if args.replicate in [2, 8] and args.num_negative_easy > 0:
-                    loss *= 0.5
-                # smh - so annoying... Ok if
-                elif args.replicate in np.arange(50, 100) and (args.replicate % 2) == 0:
-                    loss *= 0.5
-                
                 loss.backward()
                 contrastive_batch = contrastive_batch.detach().cpu()
                 
@@ -148,11 +142,6 @@ def train_epoch(encoder, classifier, dataloader,
                     loss *= ((1 - supervised_weight) / 
                              (len(inputs_a_) * len(batch_inputs)))
                     
-                    if args.replicate in [2, 8]:
-                        loss *= 0.5   
-                    # smh - so annoying... Ok anything other than those is not loss *= 0.5
-                    elif args.replicate in np.arange(50, 100) and (args.replicate % 2) == 0:
-                        loss *= 0.5
 
                     loss.backward()
                     contrastive_batch = contrastive_batch.detach().cpu()
@@ -167,10 +156,6 @@ def train_epoch(encoder, classifier, dataloader,
                 if anchor_ix + 1 == len(inputs_a_):
                     input_list = [inputs_a, inputs_p, inputs_n, inputs_ne]
                     label_list = [labels_a, labels_p, labels_n, labels_ne]
-                    
-                    if args.replicate > 30 and args.replicate < 40:
-                        input_list = [inputs_a, inputs_p, inputs_n]
-                        label_list = [labels_a, labels_p, labels_n]
                     min_input_size = np.min([len(x) for x in input_list])
                     contrast_inputs = torch.cat([x[:min_input_size] for x in input_list])
                     contrast_labels = torch.cat([l[:min_input_size] for l in label_list])
@@ -236,10 +221,11 @@ def train_epoch(encoder, classifier, dataloader,
             if scheduler_c is not None:
                 scheduler_c.step()
             optim_e.zero_grad()
-            if args.replicate > 50 or args.replicate in [8, 4, 36, 44]:
-                optim_c.zero_grad()  # For replicate < 50, this was also optim_c.zero_grad before, i.e. not zeroing grads?
-            else:
-                optim_c.zero_grad
+            optim_c.zero_grad()
+#             if args.replicate > 50 or args.replicate in [8, 4, 36, 44]:
+#                 optim_c.zero_grad()  # For replicate < 50, this was also optim_c.zero_grad before, i.e. not zeroing grads?
+#             else:
+#                 optim_c.zero_grad
         
         epoch_losses.append(batch_loss)
         epoch_losses_contrastive.append(batch_loss_contrastive)
