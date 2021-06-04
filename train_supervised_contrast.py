@@ -59,10 +59,8 @@ def train_epoch(encoder, classifier, dataloader,
     encoder.to(args.device)
     classifier.to(args.device)
     
-    # Added this 5/18 -
     optim_e.zero_grad()
     optim_c.zero_grad()
-    # -----------------
     contrastive_weight = args.contrastive_weight
     loss_compute_size = int(args.num_anchor +
                             args.num_negative +
@@ -153,6 +151,7 @@ def train_epoch(encoder, classifier, dataloader,
                 if args.finetune_epochs > 0:
                     continue
                 
+                # Compute cross-entropy loss jointly
                 if anchor_ix + 1 == len(inputs_a_):
                     input_list = [inputs_a, inputs_p, inputs_n, inputs_ne]
                     label_list = [labels_a, labels_p, labels_n, labels_ne]
@@ -290,7 +289,6 @@ def compute_slice_outputs(erm_model, train_loader, test_criterion, args):
         sliced_data_indices, sliced_data_correct = combine_data_indices(
             [sliced_data_indices, sliced_data_indices_], 
             [sliced_data_correct, sliced_data_correct_])
-#         sliced_data_indices_t = sliced_data_indices_t_  # Or could be the other one
     elif args.slice_with == 'pred':
         sliced_data_indices = sliced_data_indices_
         sliced_data_correct = sliced_data_correct_
@@ -324,58 +322,31 @@ def finetune_model(encoder, criterion, test_criterion, dataloaders,
                 print(name)
         args.model_type += f'-fe'
         
-    optim = get_optim(model, args, model_type='classifier')
-    if args.replicate in np.arange(60, 70):
-        if args.replicate > 64:
-            args.subsample_labels = False
-            args.supersample_labels = True
-            args.model_type += f'-ss'
-        else:
-            args.subsample_labels = True
-            args.supersample_labels = False
-            args.model_type += '-us'
-            
-        erm_model.to(args.device)
-        erm_model.eval()
-        slice_outputs = compute_slice_outputs(erm_model,
-                                              train_loader,
-                                              test_criterion, 
-                                              args)
-        sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
-        erm_model.to(torch.device('cpu'))
-        indices = np.hstack(sliced_data_indices)
-        heading = f'Finetuning on aggregated slices'
-        print('-' * len(heading))
-        print(heading)
-        sliced_val_loader = val_loader
-        sliced_train_sampler = SubsetRandomSampler(indices)
-        sliced_train_loader = DataLoader(train_loader.dataset,
-                                         batch_size=args.bs_trn,
-                                         sampler=sliced_train_sampler,
-                                         num_workers=args.num_workers)
-        args.model_type = '2s2s_ss'
-        outputs = train_model(model, optim, criterion,
-                              sliced_train_loader,
-                              sliced_val_loader, args, 0,
-                              args.finetune_epochs, True, 
-                              test_loader, test_criterion)
-    else:
-        args.model_type += f'-erm'
-        heading = f'Finetuning on original dataset'
-        print('-' * len(heading))
-        print(heading)
-        # Shuffle train_loader
-        train_indices = np.arange(len(train_loader.dataset.targets))
-        train_sampler = SubsetRandomSampler(train_indices)
-        train_loader_ = DataLoader(train_loader.dataset,
-                                   batch_size=args.bs_trn,
-                                   sampler=train_sampler,
-                                   num_workers=args.num_workers)
-        
-        outputs = train_model(model, optim, criterion,
-                              train_loader_, val_loader, args, 0,
-                              args.finetune_epochs, True, 
-                              test_loader, test_criterion)
+    optim = get_optim(model, args, model_type='classifier')        
+    erm_model.to(args.device)
+    erm_model.eval()
+    slice_outputs = compute_slice_outputs(erm_model,
+                                          train_loader,
+                                          test_criterion, 
+                                          args)
+    sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
+    erm_model.to(torch.device('cpu'))
+    indices = np.hstack(sliced_data_indices)
+    heading = f'Finetuning on aggregated slices'
+    print('-' * len(heading))
+    print(heading)
+    sliced_val_loader = val_loader
+    sliced_train_sampler = SubsetRandomSampler(indices)
+    sliced_train_loader = DataLoader(train_loader.dataset,
+                                     batch_size=args.bs_trn,
+                                     sampler=sliced_train_sampler,
+                                     num_workers=args.num_workers)
+    args.model_type = '2s2s_ss'
+    outputs = train_model(model, optim, criterion,
+                          sliced_train_loader,
+                          sliced_val_loader, args, 0,
+                          args.finetune_epochs, True, 
+                          test_loader, test_criterion)
     model, max_robust_metrics, all_acc = outputs
     return model
         
@@ -443,9 +414,6 @@ def main():
     parser.add_argument('--contrastive_weight', type=float, default=0.5)
     ## Classifier
     parser.add_argument('--classifier_update_interval', type=int, default=8)
-    ### Supervised
-    parser.add_argument('-cs', '--contrastive_samples', type=str, default='apn')
-    # Note - this argument isn't actually used now w/ shuffling batches
     ## General training hyperparameters
     parser.add_argument('--optim', type=str, default='sgd', 
                         choices=['AdamW', 'adam', 'sgd'])  # Keep the same for all stages
