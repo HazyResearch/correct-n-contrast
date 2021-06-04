@@ -52,14 +52,6 @@ def prepare_contrastive_points(sliced_data_indices,
         for tc_ix, tc in enumerate(target_class):
             print(f'>> Slice {slice_ix}, target: {tc}, counts: {target_counts[tc_ix]}')
 
-        # DEBUG
-        spurious_class, spurious_counts = np.unique(train_spurious[data_indices], 
-                                                    return_counts=True)
-        for tc_ix, tc in enumerate(spurious_class):
-            print(f'> Spurious class: {tc} | Counts: {spurious_counts[tc_ix]}')
-        print(f'>> Slice {slice_ix}, targets: {spurious_class}, counts: {spurious_counts}')
-        # End DEBUG
-
         # Anchors are datapoints in the slice that the model got correct
         ix = np.where(sliced_data_correct[slice_ix])[0]
         print(f'Slice {slice_ix} % correct: {len(ix) / len(data_indices) * 100:<.4f} %')
@@ -97,13 +89,6 @@ def prepare_contrastive_points(sliced_data_indices,
                                   'correct': list(sliced_data_correct_all[neg_class_ix]),  # source not technically right here
                                   'source': list((np.ones(len(train_targets_all)) * slice_ix).astype(int)),
                                   'spurious': [None]}
-            
-#             slice_ix_negatives = {'ix':       [None],
-#                                   'loss':     [None],
-#                                   'target':   [None],
-#                                   'correct':  [None],
-#                                   'source':   list((np.ones(1) * slice_ix).astype(int)),
-#                                   'spurious': [None]}
         else:
             print(f'Slice {slice_ix} # negative (incorrect): {len(nix)}')
             print(f'Slice {slice_ix} % negative (incorrect): {len(nix) / len(data_indices) * 100 :<.4f} %')
@@ -182,168 +167,14 @@ def prepare_contrastive_points(sliced_data_indices,
     return slice_anchors, slice_negatives, positives_by_class, all_anchors
 
 
-# Messy - should refactor this into the above
-def prepare_contrastive_points_hard_anchors(sliced_data_indices,
-                                            sliced_data_losses,
-                                            sliced_data_correct,
-                                            train_loader, args):
-    """
-    Sample with anchors being points the ERM model got incorrect, positives and negatives being points the model got correct.
-    - Additional negatives are now "hard negatives", for classification
-    """
-
-    train_targets_all = train_loader.dataset.targets_all
-    train_targets = train_targets_all['target']
-    train_spurious = train_targets_all['spurious']
-    sliced_data_indices_all = np.concatenate(sliced_data_indices)
-    sliced_data_losses_all = np.zeros(len(train_targets))
-    sliced_data_losses_all[sliced_data_indices_all] = np.concatenate(sliced_data_losses)
-    sliced_data_correct_all = np.zeros(len(train_targets))
-    sliced_data_correct_all[sliced_data_indices_all] = np.concatenate(sliced_data_correct)
-
-    all_anchors = {'slice_ix': np.zeros(len(train_targets)).astype(int),
-                   'in_slice_ix': np.zeros(len(train_targets)).astype(int)}
-
-    # Store all anchors and negatives
-    slice_anchors = [None] * len(sliced_data_indices)
-    slice_negatives = [None] * len(sliced_data_indices)
-    # Additional negatives, if specified
-    additional_slice_negatives = [None] * len(sliced_data_indices)
-
-    # For positives, just specify by the ground-truth
-    # (These are the same as negatives in another slice, just organized by class)
-    positives_by_class = {}
-
-    for slice_ix, data_indices in enumerate(sliced_data_indices):
-        target_class, target_counts = np.unique(train_targets[data_indices], 
-                                                return_counts=True)
-        
-        for tc_ix, tc in enumerate(target_class):
-            print(f'>> Slice {slice_ix}, target: {tc}, counts: {target_counts[tc_ix]}')
-
-        # DEBUG
-        spurious_class, spurious_counts = np.unique(train_spurious[data_indices], 
-                                                    return_counts=True)
-        for tc_ix, tc in enumerate(spurious_class):
-            print(f'> Spurious class: {tc} | Counts: {spurious_counts[tc_ix]}')
-        print(f'>> Slice {slice_ix}, targets: {spurious_class}, counts: {spurious_counts}')
-        # End DEBUG
-
-        # Anchors are now datapoints in the slice that the model got incorrect
-        ix = np.where(sliced_data_correct[slice_ix].astype(int) != 1)[0]
-        print(f'Slice {slice_ix} % incorrect: {len(ix) / len(data_indices) * 100:<.4f} %')
-
-        slice_ix_anchors = {'ix':       data_indices[ix],
-                            'loss':     sliced_data_losses[slice_ix][ix],
-                            'target':   train_targets[data_indices][ix],
-                            'correct':  sliced_data_correct[slice_ix][ix],
-                            'source':   np.ones(len(data_indices[ix])).astype(int) * slice_ix,
-                            'spurious': train_spurious[data_indices][ix],
-                            'ix_by_class': {}, 
-                            'loss_by_class': {}}
-        
-        for t in np.unique(train_targets[data_indices][ix]):
-            tix = np.where(train_targets[data_indices][ix] == t)[0]
-            slice_ix_anchors['ix_by_class'][t] = data_indices[ix][tix]
-            slice_ix_anchors['loss_by_class'][t] = sliced_data_losses[slice_ix][ix][tix]
-
-        # Negatives, slice-specific. All correct datapoints in the slice
-        nix = np.setdiff1d(np.arange(len(data_indices)), ix)
-        ## TODO: handle case if there are no incorrect datapoints
-        if len(nix) == 0:
-            slice_ix_negatives = {'ix':       [None],
-                                  'loss':     [None],
-                                  'target':   [None],
-                                  'correct':  [None],
-                                  'source':   list(np.ones(1).astype(int) * slice_ix),
-                                  'spurious': [None]}
-        else:
-            print(f'Slice {slice_ix} # negative (incorrect): {len(nix)}')
-            print(f'Slice {slice_ix} % negative (incorrect): {len(nix) / len(data_indices) * 100 :<.4f} %')
-            print(f'Unique negative targets: {np.unique(train_targets[data_indices][nix], return_counts=True)}')
-
-            slice_ix_negatives = {'ix':       list(data_indices[nix]),
-                                  'loss':     list(sliced_data_losses[slice_ix][nix]),
-                                  'target':   list(train_targets[data_indices][nix]),
-                                  'correct':  list(sliced_data_correct[slice_ix][nix]),
-                                  'source':   list(np.ones(len(data_indices[nix])).astype(int) * slice_ix),
-                                  'spurious': list(train_spurious[data_indices][nix])}
-
-            # Positives, for other slices - for here just save by unique class that was also correct
-            target_class, target_counts = np.unique(train_targets[data_indices][nix], 
-                                                    return_counts=True)
-            incorrect_data_indices = data_indices[nix]
-            for cix, c in enumerate(target_class):
-                pix = np.where(train_targets[incorrect_data_indices] == c)[0]
-                pos_data_indices  = list(incorrect_data_indices[pix])
-                pos_data_losses   = list(sliced_data_losses[slice_ix][nix][pix])
-                pos_data_targets  = list(train_targets[incorrect_data_indices][pix])
-                pos_data_correct  = list(sliced_data_correct[slice_ix][nix][pix])
-                pos_data_source   = list(np.ones(len(data_indices[nix][pix])).astype(int) * slice_ix)
-                pos_data_spurious = list(train_spurious[incorrect_data_indices][pix])
-                if c in positives_by_class:
-                    positives_by_class[c]['ix'].extend(pos_data_indices)
-                    positives_by_class[c]['loss'].extend(pos_data_losses)
-                    positives_by_class[c]['target'].extend(pos_data_targets)
-                    positives_by_class[c]['correct'].extend(pos_data_correct)
-                    positives_by_class[c]['source'].extend(pos_data_source)
-                    positives_by_class[c]['spurious'].extend(pos_data_spurious)
-                else:
-                    positives_by_class[c] = {'ix':       pos_data_indices,
-                                             'loss':     pos_data_losses,
-                                             'target':   pos_data_targets,
-                                             'correct':  pos_data_correct,
-                                             'source':   pos_data_source,
-                                             'spurious': pos_data_spurious}
-        # Save 
-        slice_anchors[slice_ix] = slice_ix_anchors
-        slice_negatives[slice_ix] = slice_ix_negatives
-
-    # Fill in positives if no slices had the class as spurious
-    for slice_ix, data_indices in enumerate(sliced_data_indices):
-        target_class, target_counts = np.unique(train_targets[data_indices], 
-                                                return_counts=True)
-
-        # Compare average correctness, still use the max_class variable
-        avg_correct = []
-        for c in target_class:
-            class_indices = np.where(train_targets[data_indices] == c)[0]
-            class_correct = sliced_data_correct[slice_ix][class_indices]
-            avg_correct.append(np.mean(class_correct))
-        max_class_ix = np.argmax(avg_correct)
-
-        for c in target_class:
-            if c not in positives_by_class:
-                print(f'> Loading correct datapoints as positives for class {c} from slice {slice_ix}')
-                ix = np.where(train_targets[data_indices] == c)[0]
-                positives_by_class[c] = {'ix':       list(data_indices[ix]),
-                                         'loss':     list(sliced_data_losses[slice_ix][ix]),
-                                         'target':   list(train_targets[data_indices][ix]),
-                                         'correct':  list(sliced_data_correct[slice_ix][ix]),
-                                         'source':   list(np.ones(len(data_indices[ix])).astype(int) * slice_ix),
-                                         'spurious': list(train_spurious[data_indices][ix])}
-
-    # Convert casted lists back to ndarrays
-    for c, class_dict in positives_by_class.items():
-        for k, v in class_dict.items():
-            positives_by_class[c][k] = np.array(v)
-
-    for ix, slice_negative in enumerate(slice_negatives):
-        for k, v in slice_negative.items():
-            slice_negatives[ix][k] = np.array(v)
-            
-    return slice_anchors, slice_negatives, positives_by_class, all_anchors 
-
-
-def sample_anchors(anchor_class, anchor_dict, num_anchor, 
-                   weight_by_loss, seed):
+def sample_anchors(anchor_class, anchor_dict, 
+                   num_anchor, weight_by_loss):
     p = None
     if weight_by_loss:
         exp = np.exp(anchor_dict['loss_by_class'][anchor_class] / 
                      args.anc_loss_temp)
-        p = exp / exp.sum()  # Check this
-    num_samples = num_anchor  # to keep consistent batch size?
-    # np.random.seed(seed)  # Make sure this changes each time
+        p = exp / exp.sum()
+    num_samples = num_anchor
     sample_indices = anchor_dict['ix_by_class'][anchor_class]
     replace = True if num_samples > len(sample_indices) else False
     sample_indices = np.random.choice(sample_indices, 
@@ -354,7 +185,7 @@ def sample_anchors(anchor_class, anchor_dict, num_anchor,
 
 
 def sample_positives(anchor_class, positives_by_class,
-                     num_positive, weight_by_loss, seed):
+                     num_positive, weight_by_loss):
     positive_dict = positives_by_class[anchor_class]
     p = None
     if weight_by_loss:  # Check this
@@ -362,8 +193,6 @@ def sample_positives(anchor_class, positives_by_class,
         exp = np.exp(positive_dict['loss'] / args.pos_loss_temp)
         p = exp / exp.sum()
     num_samples = num_positive
-    # print(f'Sampling {num_samples} positive samples')
-    # np.random.seed(seed)  # Make sure this changes each time
     replace = True if num_samples > len(positive_dict['ix']) else False
     
     sample_indices = np.random.choice(np.arange(len(positive_dict['ix'])), 
@@ -376,14 +205,12 @@ def sample_positives(anchor_class, positives_by_class,
 
 
 def sample_negatives(negative_dict, num_negative, 
-                     weight_by_loss, seed):
+                     weight_by_loss):
     p = None
     if weight_by_loss:
         exp = np.exp(negative_dict['loss'] / args.neg_loss_temp)
-        p = exp / exp.sum()  # Check this
-    num_samples = num_negative  # to keep consistent batch size
-    # print(f'Sampling {num_samples} negative samples')
-    # np.random.seed(seed)  # Make sure this changes each time
+        p = exp / exp.sum()
+    num_samples = num_negative
     replace = True if num_samples > len(negative_dict['ix']) else False
     sample_indices = np.random.choice(negative_dict['ix'], 
                                       size=num_samples,
@@ -445,7 +272,7 @@ def adjust_num_anc_neg_(slice_anchors, slice_negatives,
 def load_contrastive_data(train_loader, slice_anchors, 
                           slice_negatives, positives_by_class,
                           seed, args, supervised_contrast=True):
-    # Get number of negatives per target class?
+    # Get number of negatives per target class
     args.num_negatives_by_target = [0] * args.num_classes
     assert args.replicate % 2 == 0  # Checking / debugging
     
@@ -455,7 +282,6 @@ def load_contrastive_data(train_loader, slice_anchors,
         print(f'Debug: args.balance_targets: {args.balance_targets}')
         max_sample_size = np.min([len(anchor_dict['ix']) for anchor_dict in
                                   slice_anchors])
-    # seed *= len(slice_anchors)
         
     for slice_ix, anchor_dict in enumerate(slice_anchors):
         batch_samples_per_slice = []  # First aggregate within
@@ -497,23 +323,18 @@ def load_contrastive_data(train_loader, slice_anchors,
             anchor_indices = sample_anchors(anchor_class,
                                             anchor_dict, 
                                             args.num_anchor - 1,
-                                            args.weight_anc_by_loss, 
-                                            seed + aix)
+                                            args.weight_anc_by_loss)
             anchor_indices = np.concatenate([[anchor_ix], anchor_indices])
             positive_outputs = sample_positives(anchor_class,
                                                 positives_by_class,
                                                 args.num_positive,
-                                                args.weight_pos_by_loss,
-                                                seed + aix)
+                                                args.weight_pos_by_loss)
             positive_indices, positive_slice_sources = positive_outputs
-            # print(f'len(target_batch_ix): {len(target_batch_ix)}')
-            # print(f'len(positive_indices): {len(positive_indices)}')
             # Keep as this, in case want to generate new neg per pos as before
             samples = [anchor_indices, positive_indices]
             negative_indices = sample_negatives(negative_dict, 
                                                 args.num_negative, 
-                                                args.weight_neg_by_loss,
-                                                seed + aix)
+                                                args.weight_neg_by_loss)
             samples.append(negative_indices)
             # Sample second negatives ("easy kind")
             if args.num_negative_easy > 0:
@@ -521,8 +342,7 @@ def load_contrastive_data(train_loader, slice_anchors,
                 anchor_slice = positive_slice_sources[0]
                 negative_indices = sample_negatives(slice_anchors[anchor_slice], 
                                                     args.num_negative_easy, 
-                                                    args.weight_neg_by_loss,
-                                                    seed + aix)
+                                                    args.weight_neg_by_loss)
                 samples.append(negative_indices)
             batch_sample = np.concatenate(samples)
             batch_samples_per_slice.append(batch_sample)

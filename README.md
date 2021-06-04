@@ -1,5 +1,79 @@
-# Correct and Contrast  
+# Correct-N-Contrast
 
-Code for Correct-N-Contrast (CNC)  
+This repository is the official implementation of Correct-N-Contrast: a Contrastive Approach forImproving Robustness to Spurious Correlations. 
 
-Only supporting CivilComments training for now
+>📋  Optional: include a graphic explaining your approach/main result, bibtex entry, link to demos, blog posts and tutorials
+
+## Requirements
+
+To install requirements, we recommend setting up a virtual environment with conda:
+
+```setup
+conda env create -f environment.yml  
+conda activate cnc
+```  
+
+List of (installable) dependencies:  
+* python 3.7.9  
+* matplotlib 3.3.2
+* numpy 1.19.2  
+* pandas 1.1.3  
+* pillow 8.0.1  
+* pytorch=1.7.0  
+* scikit-learn 0.23.2  
+* scipy 1.5.2  
+* transformers 4.4.2 
+* torchvision 0.8.1  
+* tqdm 4.54.0  
+* umap-learn 0.4.6
+
+>📋  Describe how to set up the environment, e.g. pip/conda/docker commands, download datasets, etc...
+
+## Datasets and code  
+
+
+
+## Training
+
+To train the model(s) in the paper, run this command:
+
+```train
+python train.py --input-data <path_to_data> --alpha 10 --beta 20
+```
+
+>📋  Describe how to train the models, with example commands on how to train the models in your paper, including the full training procedure and appropriate hyperparameters.
+
+## Evaluation
+
+To evaluate my model on ImageNet, run:
+
+```eval
+python eval.py --model-file mymodel.pth --benchmark imagenet
+```
+
+>📋  Describe how to evaluate the trained models on benchmarks reported in the paper, give commands that produce the results (section below).
+
+## Pre-trained Models
+
+You can download pretrained models here:
+
+- [My awesome model](https://drive.google.com/mymodel.pth) trained on ImageNet using parameters x,y,z. 
+
+>📋  Give a link to where/how the pretrained models can be downloaded and how they were trained (if applicable).  Alternatively you can have an additional column in your results table with a link to the models.
+
+## Results
+
+Our model achieves the following performance on :
+
+### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
+
+| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
+| ------------------ |---------------- | -------------- |
+| My awesome model   |     85%         |      95%       |
+
+>📋  Include a table of results from your paper, and link back to the leaderboard for clarity and context. If your main result is a figure, include that figure and link to the command or notebook to reproduce it. 
+
+
+## Contributing
+
+>📋  Pick a licence and describe how to contribute to your code repository.

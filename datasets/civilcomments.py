@@ -1,6 +1,6 @@
 """
 CivilComments Dataset
-- Code mostly from https://github.com/p-lambda/wilds/blob/main/wilds/datasets/civilcomments_dataset.py
+- Reference code: https://github.com/p-lambda/wilds/blob/main/wilds/datasets/civilcomments_dataset.py
 - See WILDS, https://wilds.stanford.edu for more
 """
 import os
@@ -18,8 +18,8 @@ class CivilComments(Dataset):
     """
     CivilComments dataset
     """
-    def __init__(self, root_dir, target_name='toxic', 
-                 confounder_names=['identities'],
+    def __init__(self, root_dir, 
+                 target_name='toxic', confounder_names=['identities'],
                  split='train', transform=None):
         self.root_dir = root_dir
         self.target_name = target_name
@@ -86,14 +86,12 @@ class CivilComments(Dataset):
                 groupby_fields=[identity_var, 'y'])
             for identity_var in self._identity_vars]
         
-        # Below is nonstandard
-        
         # Get sub_targets / group_idx
         groupby_fields = self._identity_vars + ['y']
         self.eval_grouper = CombinatorialGrouper(self, groupby_fields)
         self.group_array = self.eval_grouper.metadata_to_group(self.metadata_array,
                                                                return_counts=False)
-        self.n_groups = len(np.unique(self.group_array))  # self.eval_grouper._n_groups
+        self.n_groups = len(np.unique(self.group_array))
         
         # Get spurious labels
         self.spurious_grouper = CombinatorialGrouper(self, 
@@ -110,9 +108,7 @@ class CivilComments(Dataset):
             group_ix_to_label[gix] = i
         spurious_labels = [group_ix_to_label[int(s)] 
                            for s in self.spurious_array]
-#         spurious_labels = ['_'.join([str(x) for x in
-#                                      self.confounder_array[ix]]) 
-#                            for ix in range(self.confounder_array.shape[0])]
+
         self.targets_all = {'target': np.array(self.y_array),
                             'group_idx': np.array(self.group_array),
                             'spurious': np.array(spurious_labels),

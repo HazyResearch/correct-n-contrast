@@ -28,6 +28,13 @@ def set_seed(seed):
     np.random.seed(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+    
+    
+def free_gpu(tensors, delete):
+    for tensor in tensors:
+        tensor = tensor.detach().cpu()
+        if delete:
+            del tensor
 
 
 def init_experiment(args):

@@ -1,34 +1,5 @@
 """
-Should refactor this to actual integrate with the other code
-
-CelebA
-```
-# Constrastive encoder
-python train_supervised_contrast_2.py --arch resnet50_pt --dataset celebA --slice_with rep --pretrained_spurious_path ./model/celebA/celeba_regularized_5.pt --num_anchor 128 --num_positive 128 --num_negative 128 --batch_factor 32 --train_encoder --target_sample_ratio 1 --temperature 0.05 --max_epoch 300 --optim sgd --bs_trn 128 --lr 1e-5 --momentum 0.9 --weight_decay 1e-1 --stopping_window 32 --log_loss_interval 10 --checkpoint_interval 100 --log_visual_interval 200 --log_grad_visual_interval 50 --loss_component nonspurious --lr_outer 1e-4 --n_steps 1 --align_factor 1 --grad_max_epoch 100 --grad_lr 1e-5 --grad_momentum 0.9 --grad_weight_decay 0.1 --grad_bs_trn 128 --grad_slice_with pred_and_rep --verbose --seed 42 --replicate 0 -cs apn --no_projection_head --supervised_linear_scale_up --contrastive_weight 0.75
-
-# No linear scale up
-python train_supervised_contrast_2.py --arch resnet50_pt --dataset celebA --slice_with rep --pretrained_spurious_path ./model/celebA/celeba_regularized_5.pt --num_anchor 128 --num_positive 128 --num_negative 128 --batch_factor 32 --train_encoder --target_sample_ratio 1 --temperature 0.05 --max_epoch 300 --optim sgd --bs_trn 128 --lr 1e-5 --momentum 0.9 --weight_decay 1e-1 --stopping_window 32 --log_loss_interval 10 --checkpoint_interval 100 --log_visual_interval 200 --log_grad_visual_interval 50 --loss_component nonspurious --lr_outer 1e-4 --n_steps 1 --align_factor 1 --grad_max_epoch 100 --grad_lr 1e-5 --grad_momentum 0.9 --grad_weight_decay 0.1 --grad_bs_trn 128 --grad_slice_with pred_and_rep --verbose --seed 42 --replicate 0 -cs apn --no_projection_head --contrastive_weight 0.75
-
-python train_supervised_contrastive.py  --arch resnet50_pt --dataset celebA --slice_with rep --rep_cluster_method gmm --pretrained_spurious_path ./model/celebA/celeba_regularized_5.pt  --num_positive 64 --num_negative 64 --batch_factor 32 --contrastive_type contrastive --train_encoder --target_sample_ratio 1.0 --temperature 0.05 --base_temperature 0.05 --max_epoch 1 --lr 1e-5 --momentum 0.9 --weight_decay 1e-1 --stopping_window 32 --log_loss_interval 10 --checkpoint_interval 100 --log_visual_interval 400 --log_grad_visual_interval 50 --loss_component both --lr_outer 1e-5 --n_steps 1 --align_factor 1 --grad_max_epoch 100 --grad_lr 1e-5 --grad_momentum 0.9 --grad_weight_decay 0.1 --grad_bs_trn 128 --grad_slice_with pred_and_rep --grad_rep_cluster_method gmm --verbose --seed 0  --replicate 202 --loss_component nonspurious --contrastive_type contrastive --no_projection_head --retrain_burn_in -1 --replicate 206 --max_epoch 20 --classifier_update_interval 1 --supervised_contrast --replicate 259 --checkpoint_interval 10000 --log_visual_interval 400000 --target_sample_ratio 0.01 --max_epoch 100
-
-
-python train_supervised_contrast_2.py --arch resnet50_pt --dataset celebA --slice_with rep --rep_cluster_method gmm --pretrained_spurious_path ./model/celebA/celeba_regularized_5.pt --num_positive 64 --num_negative 64 --num_anchor 64 --batch_factor 32 --train_encoder --target_sample_ratio 0.1 --temperature 0.05 --lr 1e-5 --momentum 0.9 --weight_decay 1e-1 --stopping_window 32 --log_loss_interval 10 --checkpoint_interval 100000 --log_visual_interval 400000 --verbose --no_projection_head --contrastive_weight 0.75 -cs apn --seed 0  --replicate 2 --num_negative_easy 64
-
-
-r-cc-celebA-nph-na=64-np=64-nn=64-nne=64-tsr=0.1-t=0.05-bf=32-cw=0.75-me=300-bst=128-o=sgd-lr=1e-05-mo=0.9-wd=0.001-s=42-r=0.csv
-
-python train_supervised_contrast_2.py --arch resnet50_pt --dataset waterbirds --pretrained_spurious_path "./model/waterbirds/wb_regularized_model.pt" --train_encoder --num_anchor 17 --num_positive 17 --num_negative 17 --batch_factor 32 --optim sgd --lr 1e-3 --momentum 0.9 --weight_decay 1 --grad_lr 1e-4 --grad_momentum 0.9 --grad_weight_decay 1 --grad_bs_trn 128 --grad_max_epoch 300 --loss_component nonspurious --grad_slice_with pred_and_rep --grad_rep_cluster_method gmm --target_sample_ratio 1 --lr 1e-4 --temperature 0.1 --max_epoch 300 --no_projection_head --supervised_linear_scale_up --contrastive_weight 0.75 --log_visual_interval 10000 --checkpoint_interval 10000 --log_loss_interval 10 -cs apn --replicate 0 --seed 0
-
-python train_supervised_contrast_2.py --arch resnet50_pt --dataset waterbirds --pretrained_spurious_path "./model/waterbirds/wb_regularized_model.pt" --train_encoder --num_anchor 1 --num_positive 17 --num_negative 17 --batch_factor 32 --optim sgd --lr 1e-3 --momentum 0.9 --weight_decay 1 --grad_lr 1e-4 --grad_momentum 0.9 --grad_weight_decay 1 --grad_bs_trn 128 --grad_max_epoch 300 --loss_component nonspurious --grad_slice_with pred_and_rep --grad_rep_cluster_method gmm --target_sample_ratio 1 --lr 1e-4 --temperature 0.1 --max_epoch 300 --no_projection_head --contrastive_weight 0.75 --log_visual_interval 10000 --checkpoint_interval 10000 --log_loss_interval 10 --replicate 0 --seed 0
-
-python train_supervised_contrast_2.py --arch cnn --dataset colored_mnist --data_cmap hsv --test_shift random -tc 0 1 -tc 2 3 -tc 4 5 -tc 6 7 -tc 8 9 --p_correlation 0.99 -tcr 1.0 -tcr 1.0 -tcr 1.0 -tcr 1.0 -tcr 1.0 --slice_with rep --rep_cluster_method gmm --max_epoch_s 5 --num_anchor 32 --num_positive 32 --num_negative 32 --batch_factor 32 --target_sample_ratio 1 --temperature 0.05 --max_epoch 3 --optim sgd --lr 1e-2 --momentum 0.9 --weight_decay 1e-3 --bs_trn 32 --bs_val 32 --no_cuda --num_workers 0 --no_projection_head --train_encoder --lr_scheduler_classifier linear_decay --lr_scheduler linear_decay --classifier_update_interval 1 --log_loss_interval 10 --checkpoint_interval 10000 --log_visual_interval 40000 --verbose --contrastive_weight 0.5 -cs apn --seed 42 --replicate 0 
-
-# Colored MNIST
-python train_supervised_contrast_2.py --no_cuda --arch cnn --dataset colored_mnist --data_cmap hsv --test_shift random -tc 0 1 -tc 2 3 -tc 4 5 -tc 6 7 -tc 8 9 --p_correlation 0.99 -tcr 1.0 -tcr 1.0 -tcr 1.0 -tcr 1.0 -tcr 1.0 --slice_with rep --rep_cluster_method gmm --max_epoch_s 5 --num_anchor 32 --num_positive 32 --num_negative 32 --num_negative_easy 32 --batch_factor 32 --target_sample_ratio 1 --temperature 0.05 --max_epoch 3 --optim sgd --lr 1e-2 --momentum 0.9 --weight_decay 1e-3 --bs_trn 32 --bs_val 32 --no_cuda --num_workers 0 --no_projection_head --train_encoder --lr_scheduler_classifier linear_decay --lr_scheduler linear_decay --classifier_update_interval 1 --log_loss_interval 10 --checkpoint_interval 10000 --log_visual_interval 40000 --verbose --contrastive_weight 0.5 -cs apn --seed 42 --replicate 12 
-
-
-python -W ignore train_supervised_contrast_2.py --arch bert-base-uncased_pt --dataset civilcomments --slice_with rep --rep_cluster_method gmm --pretrained_spurious_path ./model/civilcomments/config/cp-a=bert-base-uncased_pt-d=civilcomments-tm=2s2s_spur-me=2-o=sgd-bs_trn=16-lr=1e-05-mo=0.9-wd=0.01-rc=0-cgn=0-s=42-cpe=2-cpre=0-cpb=-1.pth.tar --num_positive 16 --num_negative 16 --num_anchor 16 --batch_factor 32 --num_negative_easy 16 --train_encoder --target_sample_ratio 0.1 --temperature 0.1 --max_epoch 5 --optim AdamW --lr 1e-5 --log_loss_interval 10 --checkpoint_interval 10000 --log_visual_interval 400000 --verbose --seed 0 --replicate 2 --clip_grad_norm --no_projection_head --contrastive_weight 0.75 -cs apn --seed 0  --replicate 22  --balance_targets --weight_decay 1e-2
-```
+Correct-n-Contrast main script
 """
 
 import os
@@ -49,10 +20,11 @@ from tqdm import tqdm
 
 # Data
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
-from datasets import get_data_args, train_val_split, get_resampled_indices, get_resampled_set, initialize_data
+from datasets import train_val_split, get_resampled_indices, get_resampled_set, initialize_data
 # Logging and training
 from train import train_model, test_model
-from utils import print_header, init_experiment, update_contrastive_experiment_name
+from evaluate import evaluate_model, run_final_evaluation
+from utils import free_gpu, print_header, init_experiment, update_contrastive_experiment_name
 from utils.logging import Logger, log_args, summarize_acc, initialize_csv_metrics, log_data
 from utils.visualize import plot_confusion, plot_data_batch
 from utils.metrics import compute_resampled_mutual_info, compute_mutual_info_by_slice
@@ -63,20 +35,11 @@ from network import get_output, backprop_, get_bert_scheduler, _get_linear_sched
 from activations import visualize_activations
 # Contrastive
 from contrastive_supervised_loader import prepare_contrastive_points, load_contrastive_data, adjust_num_pos_neg_
-# Testing
-from contrastive_loader import prepare_contrastive_points as prepare_contrastive_points_old
-from contrastive_loader import load_contrastive_data as load_contrastive_data_old
-
-from contrastive_network import ResNetSimCLR, RobustSimCLR
-from contrastive_network import ContrastiveLoss, TripletLoss, RobustContrastiveLoss
-from slice import compute_pseudolabels, compute_slice_indices
-from contrastive_slice import train_spurious_model, get_resampled_sliced_data_indices, visualize_slice_stats
-# Alternative -> should debug later
-from slice import train_spurious_model
+from contrastive_network import ContrastiveNet, load_encoder_state_dict, compute_outputs
+from contrastive_network import SupervisedContrastiveLoss
+from slice import compute_pseudolabels, compute_slice_indices, train_spurious_model
 ## Alternative slicing by UMAP clustering
-from contrastive_slice import compute_slice_indices_by_rep, combine_data_indices
-# Grad-aligned Updates
-from contrastive_grad_update import train_grad_aligned_model, compute_grad_slices
+from slice_rep import compute_slice_indices_by_rep, combine_data_indices
 
 import transformers
 transformers.logging.set_verbosity_error()
@@ -86,7 +49,7 @@ def init_args(args):
     args.supervised_contrast = True
     args.prioritize_spurious_pos = False
     args.full_contrastive = False
-    args.contrastive_type = 'cc'
+    args.contrastive_type = 'cnc'
     
     # Metrics
     args.compute_auroc = False  # Turn True for certain datasets, e.g. ISIC, CXR8
@@ -94,7 +57,7 @@ def init_args(args):
         args.compute_auroc = True
 
     # Model
-    args.model_type = f'{args.arch}_2s2s_s1'
+    args.model_type = f'{args.arch}_cnc'
     args.criterion = 'cross_entropy'
     args.pretrained = False
     
@@ -137,8 +100,6 @@ def init_args(args):
     args.val_split = 0.1
     args.spurious_train_split = 0.2
     args.subsample_groups = False
-    # args.flipped = False
-    # args.test_cmap = ''
     args.train_method = 'sc'  # Because "slicing" by U-MAP, retrain
     
     if args.erm:
@@ -152,9 +113,6 @@ def init_args(args):
         
     if args.freeze_encoder:
         args.train_method += '-f'
-        
-    if args.grad_align:
-        args.train_method += '-ga'
     
     # Save accuracies
     args.max_robust_acc = -1
@@ -164,11 +122,6 @@ def init_args(args):
     
 def update_args(args):
     args.experiment_name = f'{args.contrastive_type}'
-    
-    if (args.replicate - 1) % 2 == 0:
-        args.num_anchor = 1
-        load_contrastive_data = load_contrastive_data_old
-        prepare_contrastive_points = prepare_contrastive_points_old
     
     if args.dataset == 'colored_mnist':
         args.experiment_name += f'-cmnist_p{args.p_correlation}-bs_trn_s={args.bs_trn_s}'
@@ -204,11 +157,6 @@ def update_args(args):
         args.experiment_name += '-slsu'
         
     args.experiment_name += f'-sud={args.supervised_update_delay}'
-        
-    # Not necessary anymore
-#     args.experiment_name += f'-cs='
-#     for c in args.contrastive_samples:
-#         args.experiment_name += f'{c}'
 
     if args.single_pos:
         args.experiment_name += '-sp'
@@ -220,7 +168,6 @@ def update_args(args):
         args.experiment_name += '-f'
 
     model_params = f'-me={args.max_epoch}-bst={args.bs_trn}-o={args.optim}-lr={args.lr}-mo={args.momentum}-wd={args.weight_decay}'
-#     if args.weight_decay_c != args.weight_decay:  # May have higher L2 reg for classifier
     model_params += f'-wdc={args.weight_decay_c}'
     if args.lr_scheduler != '':
         model_params += f'-lrs={args.lr_scheduler[:3]}'
@@ -231,196 +178,11 @@ def update_args(args):
 
     args.experiment_name += f'-s={args.seed}-r={args.replicate}'
     print(f'Updated experiment name: {args.experiment_name}')
-    
-# --------------    
-# Training Utils
-# --------------
-def compute_kl_loss(positive_kl, negative_kl, args):
-    kl_loss = (args.kl_pos_factor * positive_kl 
-               - args.kl_neg_factor * negative_kl)
-    kl_loss = f.relu(kl_loss)
-    return kl_loss
-
-
-def free_gpu(tensors, delete):
-    # tensor = tensor.to(torch.device('cpu'))
-    for tensor in tensors:
-        tensor = tensor.detach().cpu()
-        if delete:
-            del tensor
-
-            
-def compute_outputs(inputs, encoder, classifier, args, 
-                    labels=None, compute_loss=False,
-                    cross_entropy_loss=None):
-    inputs = inputs.to(args.device)
-    outputs = encoder.encode(inputs)
-    if args.replicate in range(10, 20):
-        noise = ((0.01 ** 0.5) * torch.randn(*outputs.shape)).to(args.device)
-        outputs = outputs + noise
-    
-    outputs = classifier(outputs)
-    loss = torch.zeros(1)
-    
-    if compute_loss:
-        assert labels is not None; cross_entropy_loss is not None
-        labels = labels.to(args.device)
-        loss = cross_entropy_loss(outputs, labels)
-        if args.arch == 'bert-base-uncased_pt':
-            return outputs, loss
-        free_gpu([labels], delete=True)
-        
-    free_gpu([inputs], delete=True)
-    return outputs, loss
-    
-    
-def load_encoder_state_dict(model, state_dict, contrastive_train=False):
-    # Remove 'backbone' prefix for loading into model
-    if contrastive_train:
-        log = model.load_state_dict(state_dict, strict=False)
-        for k in list(state_dict.keys()):
-            print(k)
-    else:
-        for k in list(state_dict.keys()):
-            if k.startswith('backbone.'):  
-                # Corrected for CNN
-                if k.startswith('backbone.fc1') or k.startswith('backbone.fc2'):
-                    state_dict[k[len("backbone."):]] = state_dict[k]
-                # Should also be corrected for BERT models
-                elif k.startswith('backbone.fc') or k.startswith('backbone.classifier'):
-                    pass
-                else:
-                    state_dict[k[len("backbone."):]] = state_dict[k]
-                del state_dict[k]
-        log = model.load_state_dict(state_dict, strict=False)
-    print(f'log.missing_keys: {log.missing_keys}')
-#     if not contrastive_train:
-#         assert log.missing_keys == ['fc.weight', 'fc.bias']
-    return model
-
-
-def recompute_slices_with_resampling(dataloader, slice_model, 
-                                     sampling, test_criterion,
-                                     seed, args, split='Train'):
-    """
-    Unsure how this differs exactly from balance targets, but it does?
-    """
-    # Resample indices by class
-    resampled_indices = get_resampled_indices(dataloader,
-                                              args,
-                                              args.resample_class,
-                                              seed)
-    dataset_resampled = get_resampled_set(dataloader.dataset,
-                                          resampled_indices, 
-                                          copy_dataset=True)
-    dataloader = DataLoader(dataset_resampled,
-                            batch_size=args.bs_trn,
-                            shuffle=False,
-                            num_workers=args.num_workers)
-    if args.dataset != 'civilcomments':
-        log_data(dataloader.dataset, f'Resampled {split} dataset:')
-    
-    # Compute slices for contrastive batch sampling
-    slice_model.eval()
-    slice_model.to(args.device)
-    slice_outputs = compute_slice_outputs(slice_model, dataloader,
-                                          test_criterion, args)
-    # sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
-    for _, p in slice_model.named_parameters():
-        p = p.to(torch.device('cpu'))
-    slice_model.to(torch.device('cpu'))
-    
-    # sliced_data_indices, sliced_data_correct, sliced_data_losses 
-    return slice_outputs
-
-
-def finetune_model(encoder, criterion, test_criterion, dataloaders, 
-                   slice_model, args):
-    train_loader, val_loader, test_loader = dataloaders
-    model = get_net(args)
-    state_dict = encoder.to(torch.device('cpu')).state_dict()
-    model = load_encoder_state_dict(model, state_dict)
-    args.model_type = 'finetune'
-    if args.freeze_encoder:
-        for name, param in model.named_parameters():
-            if name not in ['fc.weight', 'fc.bias', 
-                            'backbone.fc.weight', 
-                            'backbone.fc.bias']:
-                param.requires_grad = False
-        # Extra checking
-        params = list(filter(lambda p: p.requires_grad, 
-                             model.parameters()))
-        assert len(params) == 2
-        for name, param in model.named_parameters():
-            if param.requires_grad is True:
-                print(name)
-        args.model_type += f'-fe'
-        
-    optim = get_optim(model, args, model_type='classifier')
-    if args.replicate in np.arange(60, 70):
-        if args.replicate > 64:
-            args.subsample_labels = False
-            args.supersample_labels = True
-            args.model_type += f'-ss'
-        else:
-            args.subsample_labels = True
-            args.supersample_labels = False
-            args.model_type += '-us'
-            
-        slice_model.to(args.device)
-        slice_model.eval()
-        slice_outputs = compute_slice_outputs(slice_model,
-                                              train_loader,
-                                              test_criterion, 
-                                              args)
-#         slice_outputs = compute_slice_indices(slice_model,
-#                                               train_loader,
-#                                               test_criterion,
-#                                               args.bs_trn, args,
-#                                               resample_by='class',
-#                                               loss_factor=1)
-        sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
-        slice_model.to(torch.device('cpu'))
-        indices = np.hstack(sliced_data_indices)
-        heading = f'Finetuning on aggregated slices'
-        print('-' * len(heading))
-        print(heading)
-        sliced_val_loader = val_loader
-        sliced_train_sampler = SubsetRandomSampler(indices)
-        sliced_train_loader = DataLoader(train_loader.dataset,
-                                         batch_size=args.bs_trn,
-                                         sampler=sliced_train_sampler,
-                                         num_workers=args.num_workers)
-        args.model_type = '2s2s_ss'
-        outputs = train_model(model, optim, criterion,
-                              sliced_train_loader,
-                              sliced_val_loader, args, 0,
-                              args.finetune_epochs, True, 
-                              test_loader, test_criterion)
-    else:
-        args.model_type += f'-erm'
-        heading = f'Finetuning on original dataset'
-        print('-' * len(heading))
-        print(heading)
-        # Shuffle train_loader
-        train_indices = np.arange(len(train_loader.dataset.targets))
-        train_sampler = SubsetRandomSampler(train_indices)
-        train_loader_ = DataLoader(train_loader.dataset,
-                                   batch_size=args.bs_trn,
-                                   sampler=train_sampler,
-                                   num_workers=args.num_workers)
-        
-        outputs = train_model(model, optim, criterion,
-                              train_loader_, val_loader, args, 0,
-                              args.finetune_epochs, True, 
-                              test_loader, test_criterion)
-    model, max_robust_metrics, all_acc = outputs
-    return model
 
 
 def train_epoch(encoder, classifier, dataloader,
                 optim_e, optim_c, scheduler_e, scheduler_c,
-                epoch, test_loader, contrastive_loss,
+                epoch, val_loader, contrastive_loss,
                 cross_entropy_loss, args):
     """
     Train contrastive epoch
@@ -433,12 +195,13 @@ def train_epoch(encoder, classifier, dataloader,
     optim_c.zero_grad()
     # -----------------
     contrastive_weight = args.contrastive_weight
-    loss_compute_size = int(args.num_anchor + args.num_negative 
-                            + args.num_positive + args.num_negative_easy)
+    loss_compute_size = int(args.num_anchor +
+                            args.num_negative +
+                            args.num_positive +
+                            args.num_negative_easy)
     epoch_losses = []
     epoch_losses_contrastive = []
     epoch_losses_cross_entropy = []
-    epoch_losses_kl = []
     
     # encoder.eval()  # Turn off batchnorm?
     # CHECK THIS
@@ -456,7 +219,6 @@ def train_epoch(encoder, classifier, dataloader,
         batch_loss_contrastive = 0
         batch_loss_cross_entropy = 0
         batch_loss_kl = 0
-        
         batch_count = 0
         
         # Setup main contrastive batch
@@ -513,7 +275,7 @@ def train_epoch(encoder, classifier, dataloader,
                 batch_loss_contrastive += loss.item()
                 free_gpu([loss], delete=True)
                 
-                # Compute the provable way
+                # Two-sided contrastive update
                 if args.num_negative_easy > 0:
                     contrastive_batch = torch.vstack(
                         (inputs_p[0].unsqueeze(0), inputs_a, inputs_ne)
@@ -539,9 +301,7 @@ def train_epoch(encoder, classifier, dataloader,
                 if args.finetune_epochs > 0:
                     continue
                 
-                # A bit gross?
                 if anchor_ix + 1 == len(inputs_a_):
-                    # Added 5/13 - set replicate > 10 for these
                     input_list = [inputs_a, inputs_p, inputs_n, inputs_ne]
                     label_list = [labels_a, labels_p, labels_n, labels_ne]
                     
@@ -552,7 +312,6 @@ def train_epoch(encoder, classifier, dataloader,
                     contrast_inputs = torch.cat([x[:min_input_size] for x in input_list])
                     contrast_labels = torch.cat([l[:min_input_size] for l in label_list])
                     if loss_compute_size <= args.bs_trn:
-                        # Can play around here with different inputs, e.g. some portion of the positives and negatives too?
                         output, loss = compute_outputs(contrast_inputs, 
                                                        encoder, classifier,
                                                        args, 
@@ -565,43 +324,34 @@ def train_epoch(encoder, classifier, dataloader,
                         batch_loss_cross_entropy += loss.item()
                         free_gpu([loss], delete=True)
                     else:
-                        # contrast_inputs = torch.stack((inputs_a, inputs_p, inputs_n), dim=1).reshape(-1, *list(inputs_a.shape)[1:])
-                        # contrast_inputs = torch.split(contrast_inputs, args.bs_trn)
-
-                        # contrast_labels = torch.stack((labels_a, labels_p, labels_n), dim=1).reshape(-1)
-                        # contrast_labels = torch.split(contrast_labels, args.bs_trn)
-                        
-                        # Shuffle together and split
-                        # contrast_inputs = torch.cat((inputs_a, inputs_p, inputs_n))
-                        # contrast_labels = torch.cat((labels_a, labels_p, labels_n))
-                        
                         shuffle_ix = np.arange(contrast_inputs.shape[0])
                         np.random.shuffle(shuffle_ix)
                         contrast_inputs = contrast_inputs[shuffle_ix]
                         contrast_labels = contrast_labels[shuffle_ix]
                         
-                        contrast_inputs = torch.split(contrast_inputs, args.bs_trn)
-                        contrast_labels = torch.split(contrast_labels, args.bs_trn)
+                        contrast_inputs = torch.split(contrast_inputs,
+                                                      args.bs_trn)
+                        contrast_labels = torch.split(contrast_labels,
+                                                      args.bs_trn)
 
                         for cix, contrast_input in enumerate(contrast_inputs):
-                            
                             weight = contrast_input.shape[0] / len(shuffle_ix)
                             output, loss = compute_outputs(contrast_input, 
                                                            encoder,
                                                            classifier,
                                                            args,
                                                            contrast_labels[cix], 
-                                                           True, cross_entropy_loss)
-                            loss *= (supervised_weight * weight / len(batch_inputs))
+                                                           True,
+                                                           cross_entropy_loss)
+                            loss *= (supervised_weight * weight /
+                                     len(batch_inputs))
                             loss.backward()
                         
                             batch_loss += loss.item()
                             batch_loss_cross_entropy += loss.item()
 
                             free_gpu([loss, output], delete=True)
-                    
                 batch_count += 1
-                
             pbar.update(1)
 
         if args.arch == 'bert-base-uncased_pt':
@@ -631,33 +381,17 @@ def train_epoch(encoder, classifier, dataloader,
         epoch_losses.append(batch_loss)
         epoch_losses_contrastive.append(batch_loss_contrastive)
         epoch_losses_cross_entropy.append(batch_loss_cross_entropy)
-        # epoch_losses_kl.append(batch_loss_kl)
         
         if (batch_ix + 1) % args.log_loss_interval == 0:
             print_output  = f'Epoch {epoch:>3d} | Batch {batch_ix:>4d} | '
             print_output += f'Loss: {batch_loss:<.4f} (Epoch Avg: {np.mean(epoch_losses):<.4f}) | '
             print_output += f'CL: {batch_loss_contrastive:<.4f} (Epoch Avg: {np.mean(epoch_losses_contrastive):<.4f}) | '
             print_output += f'CE: {batch_loss_cross_entropy:<.4f}, (Epoch Avg: {np.mean(epoch_losses_cross_entropy):<.4f}) | '
-            # print_output += f'KL: {batch_loss_kl:<.4f}, Epoch Avg: {np.mean(epoch_losses_kl):<.4f}'
             print_output += f'SW: {supervised_weight:<.4f}'
             print(print_output)
             
-        if (batch_ix + 1) % args.checkpoint_interval == 0 or (batch_ix + 1) == len(dataloader):
-#             checkpoint_name = save_checkpoint(encoder, optim_e,
-#                                               np.mean(epoch_losses), 
-#                                               epoch, batch_ix, args, 
-#                                               replace=True,
-#                                               retrain_epoch=-1,
-#                                               identifier='enc')
-            
-#             args.checkpoint_name = checkpoint_name
-#             checkpoint_name = save_checkpoint(classifier, optim_c,
-#                                               np.mean(epoch_losses),
-#                                               epoch, batch_ix, args,
-#                                               replace=True,
-#                                               retrain_epoch=-1,
-#                                               identifier='cls')
-#             args.checkpoint_name = checkpoint_name
+        if ((batch_ix + 1) % args.checkpoint_interval == 0 or 
+            (batch_ix + 1) == len(dataloader)):
             model = get_net(args)
             state_dict = encoder.to(torch.device('cpu')).state_dict()
             model = load_encoder_state_dict(model, state_dict)
@@ -665,7 +399,6 @@ def train_epoch(encoder, classifier, dataloader,
                 model.classifier = classifier
             else:
                 model.fc = classifier
-                # model.classifier = classifier
             checkpoint_name = save_checkpoint(model, None,
                                               np.mean(epoch_losses),
                                               epoch, batch_ix, args,
@@ -676,142 +409,16 @@ def train_epoch(encoder, classifier, dataloader,
             
     epoch_losses = (epoch_losses,
                     epoch_losses_contrastive,
-                    epoch_losses_cross_entropy,
-                    epoch_losses_kl)
+                    epoch_losses_cross_entropy)
     return encoder, classifier, epoch_losses
-
-
-def evaluate_model(model, dataloaders, modes, test_criterion, args, epoch):
+        
+        
+def compute_slice_outputs(erm_model, train_loader, test_criterion, args):
     """
-    Args:
-        - modes (str[]): ['Training', 'Testing']
+    Compute predictions of ERM model to set up contrastive batches
     """
-    # Assume test dataloader is last
-    for dix, dataloader in enumerate(dataloaders):
-        test_outputs = test_model(model, dataloader, test_criterion, 
-                                  args, epoch, modes[dix])
-        test_running_loss, test_correct, test_total, correct_by_groups, total_by_groups, correct_indices, all_losses, loss_by_groups = test_outputs
-    
-    robust_acc = summarize_acc(correct_by_groups, total_by_groups,
-                               stdout=False)
-    print(f'Robust acc: {robust_acc}')
-    print(f'Max robust acc: {args.max_robust_acc}')
-    
-    if robust_acc > args.max_robust_acc:
-        print(f'New max robust acc: {robust_acc}')
-        args.max_robust_acc = robust_acc
-        args.max_robust_epoch = epoch
-        args.max_robust_group_acc = (correct_by_groups, total_by_groups)
-        
-        print(f'- Saving best checkpoint at epoch {epoch}')
-        checkpoint_name = save_checkpoint(model, None,
-                                          robust_acc,  # override loss
-                                          epoch, -1, args,
-                                          replace=True,
-                                          retrain_epoch=-1,
-                                          identifier='fm_b')
-        args.checkpoint_name = checkpoint_name
-        
-        if 'bert' not in args.arch:
-            # Visualize highest confidence and random incorrect test samples
-            max_loss_indices = np.argsort(all_losses)[-64:]
-            plot_data_batch([dataloader.dataset.__getitem__(i)[0] for i in max_loss_indices],
-                            mean=args.image_mean, std=args.image_std, nrow=8,
-                            title='Highest Confidence Incorrect Test Samples',
-                            args=args, save=True,
-                            save_id=f'ic_hc-e{epoch}', ftype=args.img_file_type)
-            false_indices = np.where(
-                np.concatenate(correct_indices, axis=0) == False)[0]
-            plot_data_batch([dataloader.dataset.__getitem__(i)[0] for i in false_indices[:64]],
-                            mean=args.image_mean, std=args.image_std, nrow=8,
-                            title='Random Incorrect Test Samples',
-                            args=args, save=True,
-                            save_id=f'ic_rd-e{epoch}', ftype=args.img_file_type)
-    
-    save_path = os.path.join(args.results_path,
-                             f'r-{args.experiment_name}.csv')
-    pd.DataFrame(args.test_metrics).to_csv(save_path, index=False)
-    print(f'Test metrics saved to {save_path}!')
-    
-    plt.plot(args.test_metrics['robust_acc'], label='robust acc.')
-    plt.plot(args.test_metrics['max_robust_acc'], label='max robust acc.')
-    plt.title(f'Worst-group test accuracy')
-    plt.legend()
-    figpath = os.path.join(args.image_path, f'ta-{args.experiment_name}.png')
-    plt.savefig(figpath)
-    plt.close()
-
-
-def run_final_evaluation(model, test_loader, test_criterion, args, epoch,
-                         visualize_representation=True):
-    test_outputs = test_model(model, test_loader, test_criterion, 
-                              args, epoch, 'Testing')
-    test_running_loss, test_correct, test_total, correct_by_groups, total_by_groups, correct_indices, all_losses, loss_by_groups = test_outputs
-    # Summarize accuracies by group and plot confusion matrix
-    if epoch + 1 == args.max_epoch:
-        print('Final:')
-        robust_acc = summarize_acc(correct_by_groups, total_by_groups,
-                                   stdout=False)
-        print(f'Robust acc: {robust_acc}')
-    
-        if robust_acc > args.max_robust_acc:
-            print(f'New max robust acc: {robust_acc}')
-            args.max_robust_acc = robust_acc
-            args.max_robust_epoch = epoch
-            args.max_robust_group_acc = (correct_by_groups, total_by_groups)
-            
-            checkpoint_name = save_checkpoint(model, None,
-                                              robust_acc,  # override loss
-                                              epoch, -1, args,
-                                              replace=True,
-                                              retrain_epoch=-1,
-                                              identifier='fm_lb')
-        
-    
-        save_id = f'{args.train_method}-epoch'
-        plot_confusion(correct_by_groups, total_by_groups, save_id=save_id,
-                       save=True, ftype=args.img_file_type, args=args)
-    # Save results
-    try:
-        save_path = os.path.join(args.results_path,
-                                 f'r-{args.experiment_name}.csv')
-        pd.DataFrame(args.test_metrics).to_csv(save_path, index=False)
-    except Exception as e:
-        print(e)
-        save_path = f'r-{args.experiment_name}.csv'
-        pd.DataFrame(args.test_metrics).to_csv(save_path, index=False)
-        
-    if 'bert' not in args.arch and visualize_representation:
-        # Visualize highest confidence and random incorrect test samples
-        max_loss_indices = np.argsort(all_losses)[-64:]
-        plot_data_batch([test_loader.dataset.__getitem__(i)[0] for i in max_loss_indices],
-                        mean=args.image_mean, std=args.image_std, nrow=8,
-                        title='Highest Confidence Incorrect Test Samples',
-                        args=args, save=True,
-                        save_id='ic_hc', ftype=args.img_file_type)
-        false_indices = np.where(
-            np.concatenate(correct_indices, axis=0) == False)[0]
-        plot_data_batch([test_loader.dataset.__getitem__(i)[0] for i in false_indices[:64]],
-                        mean=args.image_mean, std=args.image_std, nrow=8,
-                        title='Random Incorrect Test Samples',
-                        args=args, save=True,
-                        save_id='ic_rd', ftype=args.img_file_type)
-        # Visualize U-MAPs of activations
-    if visualize_representation and 'bert' not in args.arch:
-        suffix = f'(robust acc: {robust_acc:<.3f})'
-        save_id = f'{args.contrastive_type[0]}g{args.max_epoch}'
-        visualize_activations(model, dataloader=test_loader,
-                              label_types=['target', 'spurious', 'group_idx'],
-                              num_data=1000, figsize=(8, 6), save=True,
-                              ftype=args.img_file_type, title_suffix=suffix,
-                              save_id_suffix=save_id, args=args)
-        
-    
-        
-        
-def compute_slice_outputs(slice_model, train_loader, test_criterion, args):
     if 'rep' in args.slice_with:
-        slice_outputs = compute_slice_indices_by_rep(slice_model,
+        slice_outputs = compute_slice_indices_by_rep(erm_model,
                                                      train_loader,
                                                      cluster_umap=True, 
                                                      umap_components=2,
@@ -821,7 +428,7 @@ def compute_slice_outputs(slice_model, train_loader, test_criterion, args):
         sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
 
     if 'pred' in args.slice_with:
-        slice_outputs_ = compute_slice_indices(slice_model, train_loader, 
+        slice_outputs_ = compute_slice_indices(erm_model, train_loader, 
                                                test_criterion, 1, 
                                                args, 
                                                resample_by='class',
@@ -841,6 +448,87 @@ def compute_slice_outputs(slice_model, train_loader, test_criterion, args):
         sliced_data_losses = sliced_data_losses_
         
     return sliced_data_indices, sliced_data_correct, sliced_data_losses
+
+
+def finetune_model(encoder, criterion, test_criterion, dataloaders, 
+                   erm_model, args):
+    """
+    Instead of joint training, finetune classifier
+    """
+    train_loader, val_loader, test_loader = dataloaders
+    model = get_net(args)
+    state_dict = encoder.to(torch.device('cpu')).state_dict()
+    model = load_encoder_state_dict(model, state_dict)
+    args.model_type = 'finetune'
+    if args.freeze_encoder:
+        for name, param in model.named_parameters():
+            if name not in ['fc.weight', 'fc.bias', 
+                            'backbone.fc.weight', 
+                            'backbone.fc.bias']:
+                param.requires_grad = False
+        # Extra checking
+        params = list(filter(lambda p: p.requires_grad, 
+                             model.parameters()))
+        assert len(params) == 2
+        for name, param in model.named_parameters():
+            if param.requires_grad is True:
+                print(name)
+        args.model_type += f'-fe'
+        
+    optim = get_optim(model, args, model_type='classifier')
+    if args.replicate in np.arange(60, 70):
+        if args.replicate > 64:
+            args.subsample_labels = False
+            args.supersample_labels = True
+            args.model_type += f'-ss'
+        else:
+            args.subsample_labels = True
+            args.supersample_labels = False
+            args.model_type += '-us'
+            
+        erm_model.to(args.device)
+        erm_model.eval()
+        slice_outputs = compute_slice_outputs(erm_model,
+                                              train_loader,
+                                              test_criterion, 
+                                              args)
+        sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
+        erm_model.to(torch.device('cpu'))
+        indices = np.hstack(sliced_data_indices)
+        heading = f'Finetuning on aggregated slices'
+        print('-' * len(heading))
+        print(heading)
+        sliced_val_loader = val_loader
+        sliced_train_sampler = SubsetRandomSampler(indices)
+        sliced_train_loader = DataLoader(train_loader.dataset,
+                                         batch_size=args.bs_trn,
+                                         sampler=sliced_train_sampler,
+                                         num_workers=args.num_workers)
+        args.model_type = '2s2s_ss'
+        outputs = train_model(model, optim, criterion,
+                              sliced_train_loader,
+                              sliced_val_loader, args, 0,
+                              args.finetune_epochs, True, 
+                              test_loader, test_criterion)
+    else:
+        args.model_type += f'-erm'
+        heading = f'Finetuning on original dataset'
+        print('-' * len(heading))
+        print(heading)
+        # Shuffle train_loader
+        train_indices = np.arange(len(train_loader.dataset.targets))
+        train_sampler = SubsetRandomSampler(train_indices)
+        train_loader_ = DataLoader(train_loader.dataset,
+                                   batch_size=args.bs_trn,
+                                   sampler=train_sampler,
+                                   num_workers=args.num_workers)
+        
+        outputs = train_model(model, optim, criterion,
+                              train_loader_, val_loader, args, 0,
+                              args.finetune_epochs, True, 
+                              test_loader, test_criterion)
+    model, max_robust_metrics, all_acc = outputs
+    return model
         
 
 def main():
@@ -932,34 +620,22 @@ def main():
     parser.add_argument('--lr_scheduler_classifier', type=str, default='')
     parser.add_argument('--lr_scheduler', type=str, default='')
     
-#     # Cross-entropy + KL prediction regularization
-#     parser.add_argument('--a_cross_entropy_weight', type=float, default=1)
-#     parser.add_argument('--p_cross_entropy_weight', type=float, default=0)
-#     parser.add_argument('--n_cross_entropy_weight', type=float, default=0)
-#     ## KL factors
-#     parser.add_argument('--kl_pos_factor', type=float, default=1)
-#     parser.add_argument('--kl_neg_factor', type=float, default=0)
-#     ## Total weighting: a * CE + b * KL
-#     parser.add_argument('--cross_entropy_weight', type=float, default=0.5)
-#     parser.add_argument('--kl_weight', type=float, default=0.5)
-    
-    
-    # Training gradient-aligned model
-    parser.add_argument('--grad_align', default=False, action='store_true')
-    parser.add_argument('--loss_component', type=str, default='none',
-                        choices=['spurious', 'nonspurious', 'both', 'none'])
-    parser.add_argument('--grad_slice_with', type=str, default='rep',
-                        choices=['rep', 'pred', 'pred_and_rep'])
-    parser.add_argument('--grad_rep_cluster_method', type=str, 
-                        default='gmm', choices=['kmeans', 'gmm'])
-    parser.add_argument('--lr_outer', type=float, default=1e-4)
-    parser.add_argument('--n_steps', type=int, default=1)
-    parser.add_argument('--align_factor', type=float, default=1)
-    parser.add_argument('--grad_max_epoch', type=int, default=100)
-    parser.add_argument('--grad_lr', type=float, default=1e-4)
-    parser.add_argument('--grad_momentum', type=float, default=0.9)
-    parser.add_argument('--grad_weight_decay', type=float, default=1)
-    parser.add_argument('--grad_bs_trn', type=int, default=128)
+#     # Training gradient-aligned model
+#     parser.add_argument('--grad_align', default=False, action='store_true')
+#     parser.add_argument('--loss_component', type=str, default='none',
+#                         choices=['spurious', 'nonspurious', 'both', 'none'])
+#     parser.add_argument('--grad_slice_with', type=str, default='rep',
+#                         choices=['rep', 'pred', 'pred_and_rep'])
+#     parser.add_argument('--grad_rep_cluster_method', type=str, 
+#                         default='gmm', choices=['kmeans', 'gmm'])
+#     parser.add_argument('--lr_outer', type=float, default=1e-4)
+#     parser.add_argument('--n_steps', type=int, default=1)
+#     parser.add_argument('--align_factor', type=float, default=1)
+#     parser.add_argument('--grad_max_epoch', type=int, default=100)
+#     parser.add_argument('--grad_lr', type=float, default=1e-4)
+#     parser.add_argument('--grad_momentum', type=float, default=0.9)
+#     parser.add_argument('--grad_weight_decay', type=float, default=1)
+#     parser.add_argument('--grad_bs_trn', type=int, default=128)
     ## For BERT, whether to clip grad norm
     parser.add_argument('--grad_clip_grad_norm', default=False, action='store_true')
     ## Actually train with balanced ERM
@@ -1073,11 +749,6 @@ def main():
         log_data(val_loader.dataset, 'Val dataset:')
         log_data(test_loader.dataset, 'Test dataset:')
         
-    # Test
-#     encoder = RobustSimCLR(args.arch, out_dim=args.projection_dim, 
-#                            projection_head=False, task=args.dataset, 
-#                            num_classes=args.num_classes,
-#                            checkpoint=None)
 
     if args.evaluate:
         project = not args.no_projection_head
@@ -1089,7 +760,7 @@ def main():
         print(f'Checkpoint loading from {args.load_encoder}!')
         print(f'- Resuming training at epoch {start_epoch}')
         
-        encoder = RobustSimCLR(args.arch, out_dim=args.projection_dim, 
+        encoder = ContrastiveNet(args.arch, out_dim=args.projection_dim, 
                                projection_head=project,
                                task=args.dataset, 
                                num_classes=args.num_classes,
@@ -1129,54 +800,26 @@ def main():
     # -------------------
     if args.pretrained_spurious_path != '':
         print_header('> Loading spurious model')
-        slice_model = load_pretrained_model(args.pretrained_spurious_path, args)
-        slice_model.eval()
+        erm_model = load_pretrained_model(args.pretrained_spurious_path, args)
+        erm_model.eval()
         args.mode = 'train_spurious'
     else:
         args.mode = 'train_spurious'
         print_header('> Training spurious model')
-#         spurious_outputs = train_spurious_model(train_loader, val_loader,  args,
-#                                                 test_loader, test_criterion,
-#                                                 resample=args.resample_class)
-#         slice_model, outputs, _ = spurious_outputs
         args.spurious_train_split = 0.99
-        slice_model, outputs, _ = train_spurious_model(train_loader, args)
+        erm_model, outputs, _ = train_spurious_model(train_loader, args)
 
-    slice_model.eval()
-    # slice_model.activation_layer = 'avgpool'
+    erm_model.eval()
     print(f'Pretrained model loaded from {args.pretrained_spurious_path}')
     
-    if args.train_encoder is True:  # and not args.load_encoder:
-        slice_outputs = compute_slice_outputs(slice_model, train_loader,
+    if args.train_encoder is True:
+        slice_outputs = compute_slice_outputs(erm_model, train_loader,
                                               test_criterion, args)
         sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
-   
-        print_header(f'DEBUG', style='top')
-        for ix, indices in enumerate(sliced_data_indices):
-            train_targets_all = train_loader.dataset.targets_all
-            print(f'Slice {ix} ({len(indices)}):')
-            for tix, target_value in enumerate(np.unique(train_targets_all['target'])):
-                for six, spurious_value in enumerate(np.unique(train_targets_all['spurious'])):
-                    group_ix = np.where(np.logical_and(
-                        train_targets_all['target'][indices] == target_value,
-                        train_targets_all['spurious'][indices] == spurious_value))[0]
-                    print(f'- (Target = {tix}, Spurious = {six}): {len(indices[group_ix])}')
-        print_header(f'END DEBUG', style='bottom')   
-        # End method debugging
         
-        print(f'len(sliced_data_indices): {len(sliced_data_indices)}')
-        # Report empirical MI(Y | Z_s) = \sum_{z_s} (H(Y) - H(Y | Z_s = z_s))
-        print_header('Resampled MI', style='top')
-        mi_by_slice = compute_mutual_info_by_slice(train_loader, sliced_data_indices)
-        for ix, mi in enumerate(mi_by_slice):
-            print(f'H(Y) - H(Y | Z = z_{ix}) = {mi:<.3f} (by slice)')
-        mi_resampled = compute_resampled_mutual_info(train_loader, sliced_data_indices)
-        print_header(f'H(Y) - H(Y | Z) = {mi_resampled:<.3f}')
-        args.mi_resampled = mi_resampled
-        
-        for _, p in slice_model.named_parameters():
+        for _, p in erm_model.named_parameters():
             p = p.to(torch.device('cpu'))
-        slice_model.to(torch.device('cpu'))
+        erm_model.to(torch.device('cpu'))
         
         
         # -------------
@@ -1209,7 +852,7 @@ def main():
         else:
             checkpoint = None
         
-        encoder = RobustSimCLR(args.arch, out_dim=args.projection_dim, 
+        encoder = ContrastiveNet(args.arch, out_dim=args.projection_dim, 
                                projection_head=project, task=args.dataset, 
                                num_classes=args.num_classes,
                                checkpoint=checkpoint)
@@ -1247,13 +890,12 @@ def main():
                     classifier_optimizer, args.warmup_steps, 10)
 
         cross_entropy_loss = get_criterion(args, reduction='mean')
-        contrastive_loss = RobustContrastiveLoss(args)
+        contrastive_loss = SupervisedContrastiveLoss(args)
         
         args.epoch_mean_loss = 1e5
         all_losses = []
         all_losses_cl = []
         all_losses_ce = []
-        all_losses_kl = []
 
         # Get contrastive batches for first epoch
         epoch = 0
@@ -1265,8 +907,8 @@ def main():
                                                        args, True)
 
         if args.supervised_linear_scale_up:
-            args.supervised_step_size = (1 / (len(contrastive_dataloader) * 
-                                   args.max_epoch))
+            args.supervised_step_size = (1 / (len(contrastive_dataloader) *
+                                              args.max_epoch))
         else:
             args.supervised_step_size = 0
 
@@ -1301,16 +943,15 @@ def main():
                                         contrastive_dataloader,
                                         optimizer, classifier_optimizer,
                                         scheduler, classifier_scheduler,
-                                        epoch, test_loader, 
+                                        epoch, val_loader, 
                                         contrastive_loss, cross_entropy_loss,
                                         args)
 
             encoder, classifier, epoch_losses = train_outputs
-            epoch_loss, epoch_loss_cl, epoch_loss_ce, epoch_loss_kl = epoch_losses
+            epoch_loss, epoch_loss_cl, epoch_loss_ce = epoch_losses
             all_losses.extend(epoch_loss)
             all_losses_cl.extend(epoch_loss_cl)
             all_losses_ce.extend(epoch_loss_ce)
-            all_losses_kl.extend(epoch_loss_kl)
 
             if 'bert' not in args.arch:  # Bug for now
                 # Visualize
@@ -1324,7 +965,7 @@ def main():
                                       annotate_points=None)
                 suffix = f'(epoch {epoch}, epoch loss: {np.mean(epoch_loss):<.3f}, test)'
                 save_id = f'{args.contrastive_type[0]}-e{epoch}-final'
-                visualize_activations(encoder, dataloader=test_loader,
+                visualize_activations(encoder, dataloader=val_loader,
                                       label_types=['target', 'spurious', 'group_idx'],
                                       num_data=None, figsize=(8, 6), save=True,
                                       ftype=args.img_file_type, title_suffix=suffix,
@@ -1342,40 +983,11 @@ def main():
                 model.classifier = classifier
                 
             if epoch + 1 < args.max_epoch:
-                evaluate_model(model, [train_loader, test_loader],
-                               ['Training', 'Testing'],
+                evaluate_model(model, [train_loader, val_loader],
+                               ['Training', 'Validation'],
                                test_criterion, args, epoch)
                 
                 print(f'Experiment name: {args.experiment_name}')
-                
-                
-                if args.replicate in range(20, 30):
-                    slice_outputs = compute_slice_outputs(model,
-                                                          train_loader,
-                                                          test_criterion,
-                                                          args)
-                    sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
-                    contrastive_points = prepare_contrastive_points(sliced_data_indices,
-                                                                    sliced_data_losses,
-                                                                    sliced_data_correct,
-                                                                    train_loader, args)
-                    slice_anchors, slice_negatives, positives_by_class, all_targets = contrastive_points
-                    
-                if args.resample_class != '':
-                    slice_outputs = recompute_slices_with_resampling(train_loader,
-                                                                     slice_model,
-                                                                     args.resample_class,
-                                                                     test_criterion,
-                                                                     seed=epoch+1+args.seed,
-                                                                     args=args,
-                                                                     split='Train')
-                    sliced_data_indices, sliced_data_correct, sliced_data_losses = slice_outputs
-                    contrastive_points = prepare_contrastive_points(sliced_data_indices,
-                                                                    sliced_data_losses,
-                                                                    sliced_data_correct,
-                                                                    train_loader, args)
-                    slice_anchors, slice_negatives, positives_by_class, all_targets = contrastive_points
-
                 contrastive_dataloader = load_contrastive_data(train_loader, 
                                                                slice_anchors, 
                                                                slice_negatives, 
@@ -1387,7 +999,7 @@ def main():
                     dataloaders = (train_loader, val_loader, test_loader)
                     model = finetune_model(encoder, criterion,
                                            test_criterion, dataloaders,
-                                           slice_model, args)
+                                           erm_model, args)
                 
                 args.model_type = 'final'
                 run_final_evaluation(model, test_loader, test_criterion,
