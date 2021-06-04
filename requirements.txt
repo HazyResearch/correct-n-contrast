@@ -1,0 +1,12 @@
+matplotlib
+numpy
+pandas
+pillow
+pytorch
+scikit-learn
+scipy
+tqdm
+transformers
+torchvision
+tqdm
+umap-learn
