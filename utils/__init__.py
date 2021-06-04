@@ -91,7 +91,6 @@ def init_experiment(args):
     except:
         pass
     args.experiment_name = f'a={arch}-d={args.dataset}-tm={args.train_method}{sample}-{model_params}-{model_params_s}-s={args.seed}-r={args.replicate}'
-#     args.experiment_name = f'a={arch}-d={args.dataset}-tm={args.train_method}{sample}-{experiment_configs[7:]}-{model_params}-s={args.seed}'  # {model_params_s} Taken out for now - remember what these are though
     set_seed(args.seed)
 
     # Update saving paths
