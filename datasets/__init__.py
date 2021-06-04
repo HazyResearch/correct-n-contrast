@@ -19,7 +19,6 @@ def initialize_data(args):
     
     if 'waterbirds' in args.dataset:
         args.root_dir = './datasets/data/Waterbirds/'
-        args.root_dir = '/dfs/scratch1/mzhang/projects/slice-and-dice-smol/datasets/data/Waterbirds'
         args.target_name = 'waterbird_complete95'
         args.confounder_names = ['forest2water2']
         args.image_mean = np.mean([0.485, 0.456, 0.406])
@@ -40,8 +39,7 @@ def initialize_data(args):
         # args.train_classes = args.train_classes
     
     elif 'celebA' in args.dataset:
-        args.root_dir = '/dfs/scratch0/nims/CelebA/celeba/' 
-        # args.root_dir = './datasets/data/CelebA/'
+        args.root_dir = './datasets/data/CelebA/'
         # IMPORTANT - dataloader assumes that we have directory structure
         # in ./datasets/data/CelebA/ :
         # |-- list_attr_celeba.csv
