@@ -44,7 +44,7 @@ List of (installable) dependencies:
     |-- imageN.png
 ```  
 
-**CivilComments-WILDS**: Loading this dataset requires the `transformers` package. We include the source csv in `./datasets/data/CivilComments/all_data_with_identities.csv`.
+**CivilComments-WILDS**: Loading this dataset requires the `transformers` package. One can download the source csv from [here](https://worksheets.codalab.org/bundles/0x8cd3de0634154aeaad2ee6eb96723c6e). Then, move `all_data_with_identities.csv` to `./datasets/data/CivilComments/all_data_with_identities.csv`.
 
 
 ## Training and Evaluation  
