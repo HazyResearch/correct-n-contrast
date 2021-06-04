@@ -1,6 +1,6 @@
-# Correct-N-Contrast
+# Code for Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations
 
-This folder contains code for our NeurIPS 2021 submission: Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations. 
+This folder contains code for our NeurIPS 2021 submission.  
 
 
 ## Requirements
