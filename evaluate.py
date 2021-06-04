@@ -17,7 +17,7 @@ from utils.visualize import plot_data_batch, plot_confusion
 def evaluate_model(model, dataloaders, modes, test_criterion, args, epoch):
     """
     Args:
-        - modes (str[]): ['Training', 'Testing']
+        - modes (str[]): ['Training', 'Validation']
     """
     # Assume test dataloader is last
     for dix, dataloader in enumerate(dataloaders):
@@ -81,7 +81,7 @@ def run_final_evaluation(model, test_loader, test_criterion, args, epoch,
                               args, epoch, 'Testing')
     test_running_loss, test_correct, test_total, correct_by_groups, total_by_groups, correct_indices, all_losses, loss_by_groups = test_outputs
     # Summarize accuracies by group and plot confusion matrix
-    if epoch + 1 == args.max_epoch:
+    if epoch + 1 == args.max_epoch or args.evaluate is True:
         print('Final:')
         robust_acc = summarize_acc(correct_by_groups, total_by_groups,
                                    stdout=False)

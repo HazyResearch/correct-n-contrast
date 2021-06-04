@@ -24,7 +24,8 @@ from datasets import train_val_split, get_resampled_indices, get_resampled_set, 
 # Logging and training
 from train import train_model, test_model
 from evaluate import evaluate_model, run_final_evaluation
-from utils import free_gpu, print_header, init_experiment, update_contrastive_experiment_name
+from utils import free_gpu, print_header  # , update_contrastive_experiment_name
+from utils import init_experiment, init_args, update_args
 from utils.logging import Logger, log_args, summarize_acc, initialize_csv_metrics, log_data
 from utils.visualize import plot_confusion, plot_data_batch
 from utils.metrics import compute_resampled_mutual_info, compute_mutual_info_by_slice
@@ -45,139 +46,7 @@ import transformers
 transformers.logging.set_verbosity_error()
 
 
-def init_args(args):
-    args.supervised_contrast = True
-    args.prioritize_spurious_pos = False
-    args.full_contrastive = False
-    args.contrastive_type = 'cnc'
-    
-    # Metrics
-    args.compute_auroc = False  # Turn True for certain datasets, e.g. ISIC, CXR8
-    if args.dataset in ['isic', 'cxr8']:
-        args.compute_auroc = True
 
-    # Model
-    args.model_type = f'{args.arch}_cnc'
-    args.criterion = 'cross_entropy'
-    args.pretrained = False
-    
-    ## BERT Defaults
-    args.max_grad_norm = 1.0
-    args.adam_epsilon = 1e-8
-    args.warmup_steps = 0
-    ### Keep these the same for the spurious model
-    args.max_grad_norm_s = 1.0
-    args.adam_epsilon_s = 1e-8
-    args.warmup_steps_s = 0
-    ### And the same for grad-aligned finetuning
-    args.grad_max_grad_norm = 1.0
-    args.grad_adam_epsilon = 1e-8
-    args.grad_warmup_steps = 0
-
-    args.device = torch.device('cuda:0') if torch.cuda.is_available() and not args.no_cuda else torch.device('cpu')
-    print(args.device)
-    
-    # Visualizations
-    args.img_file_type = 'png'
-    args.display_image = False
-    args.image_path = './images'
-
-    # Misc. - can't spell
-    args.log_interval = 1
-    args.log_path = './logs'
-    args.results_path = './results'
-    args.model_path = './model'
-    args.image_path = './images'
-    args.img_file_type = '.png'
-    
-    # Slicing
-    args.loss_factor = 1
-    args.supersample_labels = False
-    args.subsample_labels = False
-    args.weigh_slice_samples_by_loss = True  # just to compute losses
-    
-    # Not actually applied here
-    args.val_split = 0.1
-    args.spurious_train_split = 0.2
-    args.subsample_groups = False
-    args.train_method = 'sc'  # Because "slicing" by U-MAP, retrain
-    
-    if args.erm:
-        args.train_method += '-erm'
-        
-    if args.single_pos:
-        args.train_method += '-sp'
-        
-    if args.finetune_epochs > 0:
-        args.train_method += '-fce={args.finetune_epochs}'
-        
-    if args.freeze_encoder:
-        args.train_method += '-f'
-    
-    # Save accuracies
-    args.max_robust_acc = -1
-    args.max_robust_epoch = -1
-    args.max_robust_group_acc = (None, None)
-    
-    
-def update_args(args):
-    args.experiment_name = f'{args.contrastive_type}'
-    
-    if args.dataset == 'colored_mnist':
-        args.experiment_name += f'-cmnist_p{args.p_correlation}-bs_trn_s={args.bs_trn_s}'
-    else:
-        args.experiment_name += f'-{args.dataset}'
-
-    if args.no_projection_head:
-        args.experiment_name += f'-nph'
-        
-    args.experiment_name += f'-sw={args.slice_with[:2]}'
-    args.experiment_name += f'-na={args.num_anchor}-np={args.num_positive}-nn={args.num_negative}-nne={args.num_negative_easy}'
-    if args.weight_anc_by_loss:
-        args.experiment_name += f'-at={args.anc_loss_temp}'
-    if args.weight_pos_by_loss:
-        args.experiment_name += f'-pt={args.pos_loss_temp}'
-    if args.weight_neg_by_loss:
-        args.experiment_name += f'-nt={args.neg_loss_temp}'
-
-    args.experiment_name += f'-tsr={args.target_sample_ratio}-t={args.temperature}'
-
-    if args.hard_negative_factor > 0:
-        args.experiment_name += f'-hnf={args.hard_negative_factor}'
-
-    if args.balance_targets:
-        args.experiment_name += '-bt'
-        
-    if args.resample_class != '':
-        args.experiment_name += f'-rs={args.resample_class[0]}s'
-
-    args.experiment_name += f'-bf={args.batch_factor}-cw={args.contrastive_weight}'
-
-    if args.supervised_linear_scale_up:
-        args.experiment_name += '-slsu'
-        
-    args.experiment_name += f'-sud={args.supervised_update_delay}'
-
-    if args.single_pos:
-        args.experiment_name += '-sp'
-        
-    if args.finetune_epochs > 0:
-        args.experiment_name += f'-fce={args.finetune_epochs}'
-        
-    if args.freeze_encoder:
-        args.experiment_name += '-f'
-
-    model_params = f'-me={args.max_epoch}-bst={args.bs_trn}-o={args.optim}-lr={args.lr}-mo={args.momentum}-wd={args.weight_decay}'
-    model_params += f'-wdc={args.weight_decay_c}'
-    if args.lr_scheduler != '':
-        model_params += f'-lrs={args.lr_scheduler[:3]}'
-    if args.lr_scheduler_classifier != '':
-        model_params += f'-clrs={args.lr_scheduler[:3]}'
-    
-    args.experiment_name += model_params
-
-    args.experiment_name += f'-s={args.seed}-r={args.replicate}'
-    print(f'Updated experiment name: {args.experiment_name}')
 
 
 def train_epoch(encoder, classifier, dataloader,
@@ -203,12 +72,7 @@ def train_epoch(encoder, classifier, dataloader,
     epoch_losses_contrastive = []
     epoch_losses_cross_entropy = []
     
-    # encoder.eval()  # Turn off batchnorm?
-    # CHECK THIS
-    if args.replicate in [44] or args.seed in [420]:
-        encoder.train()
-    else:
-        encoder.eval()
+    encoder.eval()
     classifier.train()
     
     total_updates = int(len(dataloader) * args.batch_factor)
@@ -238,7 +102,6 @@ def train_epoch(encoder, classifier, dataloader,
         else:
             supervised_weight = 1 - args.contrastive_weight
 
-        # print(f'len(batch_inputs): {len(batch_inputs)}')
         for ix, batch_input in enumerate(batch_inputs):
             neg_start_ix = args.num_anchor + args.num_positive
             neg_end_ix = neg_start_ix + args.num_negative
@@ -620,22 +483,6 @@ def main():
     parser.add_argument('--lr_scheduler_classifier', type=str, default='')
     parser.add_argument('--lr_scheduler', type=str, default='')
     
-#     # Training gradient-aligned model
-#     parser.add_argument('--grad_align', default=False, action='store_true')
-#     parser.add_argument('--loss_component', type=str, default='none',
-#                         choices=['spurious', 'nonspurious', 'both', 'none'])
-#     parser.add_argument('--grad_slice_with', type=str, default='rep',
-#                         choices=['rep', 'pred', 'pred_and_rep'])
-#     parser.add_argument('--grad_rep_cluster_method', type=str, 
-#                         default='gmm', choices=['kmeans', 'gmm'])
-#     parser.add_argument('--lr_outer', type=float, default=1e-4)
-#     parser.add_argument('--n_steps', type=int, default=1)
-#     parser.add_argument('--align_factor', type=float, default=1)
-#     parser.add_argument('--grad_max_epoch', type=int, default=100)
-#     parser.add_argument('--grad_lr', type=float, default=1e-4)
-#     parser.add_argument('--grad_momentum', type=float, default=0.9)
-#     parser.add_argument('--grad_weight_decay', type=float, default=1)
-#     parser.add_argument('--grad_bs_trn', type=int, default=128)
     ## For BERT, whether to clip grad norm
     parser.add_argument('--grad_clip_grad_norm', default=False, action='store_true')
     ## Actually train with balanced ERM
@@ -703,7 +550,8 @@ def main():
     init_args(args)
     load_dataloaders, visualize_dataset = initialize_data(args)
     init_experiment(args)
-    update_contrastive_experiment_name(args)
+    # update_contrastive_experiment_name(args)
+    update_args(args)
     
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -750,37 +598,56 @@ def main():
         log_data(test_loader.dataset, 'Test dataset:')
         
 
-    if args.evaluate:
-        project = not args.no_projection_head
+    if args.evaluate is True:
+        initialize_csv_metrics(args)
         assert args.load_encoder != ''
         args.checkpoint_name = args.load_encoder
-        start_epoch = int(args.checkpoint_name.split('-cpe=')[-1].split('-')[0])
-        checkpoint = torch.load(os.path.join(args.model_path,
-                                             args.checkpoint_name))
-        print(f'Checkpoint loading from {args.load_encoder}!')
-        print(f'- Resuming training at epoch {start_epoch}')
-        
-        encoder = ContrastiveNet(args.arch, out_dim=args.projection_dim, 
-                               projection_head=project,
-                               task=args.dataset, 
-                               num_classes=args.num_classes,
-                               checkpoint=checkpoint)
-        classifier = copy.deepcopy(encoder.classifier)
-        encoder.to(torch.device('cpu'))
-        classifier.to(torch.device('cpu'))
-        model = get_net(args)
-        state_dict = encoder.to(torch.device('cpu')).state_dict()
-        for k in list(state_dict.keys()):
-            if k.startswith('fc.') and 'bert' in args.arch:
-                state_dict[f'classifier.{k[3:]}'] = state_dict[k]
-                # state_dict[k[f'classifier.{k[3:]}']] = state_dict[k]
-                del state_dict[k]
-        
-        model = load_encoder_state_dict(model, state_dict)
         try:
-            model.fc = classifier
+            start_epoch = int(args.checkpoint_name.split('-cpe=')[-1].split('-')[0])
         except:
-            model.classifier = classifier
+            start_epoch = 0
+        try:  # Load full model
+            print(f'Loading full model...')
+            model = get_net(args)
+            model_state_dict = torch.load(os.path.join(args.model_path,
+                                                       args.checkpoint_name))
+            model_state_dict = model_state_dict['model_state_dict']
+            model = load_encoder_state_dict(model, model_state_dict,
+                                            contrastive_train=False)
+            print(f'-> Full model loaded!')
+        except Exception as e:
+            print(e)
+            project = not args.no_projection_head
+            assert args.load_encoder != ''
+            args.checkpoint_name = args.load_encoder
+            start_epoch = int(args.checkpoint_name.split('-cpe=')[-1].split('-')[0])
+            checkpoint = torch.load(os.path.join(args.model_path,
+                                                 args.checkpoint_name))
+            print(f'Checkpoint loading from {args.load_encoder}!')
+            print(f'- Resuming training at epoch {start_epoch}')
+
+            
+            encoder = ContrastiveNet(args.arch, out_dim=args.projection_dim, 
+                                     projection_head=project,
+                                     task=args.dataset, 
+                                     num_classes=args.num_classes,
+                                     checkpoint=checkpoint)
+            classifier = copy.deepcopy(encoder.classifier)
+            encoder.to(torch.device('cpu'))
+            classifier.to(torch.device('cpu'))
+            model = get_net(args)
+            state_dict = encoder.to(torch.device('cpu')).state_dict()
+            for k in list(state_dict.keys()):
+                if k.startswith('fc.') and 'bert' in args.arch:
+                    state_dict[f'classifier.{k[3:]}'] = state_dict[k]
+                    # state_dict[k[f'classifier.{k[3:]}']] = state_dict[k]
+                    del state_dict[k]
+
+            model = load_encoder_state_dict(model, state_dict)
+            try:
+                model.fc = classifier
+            except:
+                model.classifier = classifier
         run_final_evaluation(model, test_loader, test_criterion,
                              args, epoch=start_epoch, 
                              visualize_representation=True)
@@ -821,7 +688,6 @@ def main():
             p = p.to(torch.device('cpu'))
         erm_model.to(torch.device('cpu'))
         
-        
         # -------------
         # Train encoder
         # -------------
@@ -837,8 +703,6 @@ def main():
         slice_anchors, slice_negatives, positives_by_class, all_targets = contrastive_points
         
         adjust_num_pos_neg_(positives_by_class, slice_negatives, args)
-        if args.num_negative_easy == 32:  # For now
-            args.num_negative_easy = args.num_negative  # Adjust?
         update_args(args)
         
         project = not args.no_projection_head
@@ -876,7 +740,6 @@ def main():
         
         # Dummy scheduler initialization
         if 'bert' in args.arch:
-            # num_training_steps = len(dataloader) * n_epochs
             scheduler = get_bert_scheduler(optimizer, n_epochs=1,
                                            warmup_steps=args.warmup_steps, 
                                            dataloader=np.arange(10))
@@ -924,7 +787,6 @@ def main():
                 len(contrastive_dataloader) * (max_epoch - start_epoch)))
             last_epoch = int(np.round(epoch * len(contrastive_dataloader)))
             if 'bert' in args.arch:
-                # num_training_steps = len(dataloader) * n_epochs
                 scheduler = get_bert_scheduler(optimizer, n_epochs=total_updates,
                                                warmup_steps=args.warmup_steps, 
                                                dataloader=contrastive_dataloader,
@@ -953,7 +815,7 @@ def main():
             all_losses_cl.extend(epoch_loss_cl)
             all_losses_ce.extend(epoch_loss_ce)
 
-            if 'bert' not in args.arch:  # Bug for now
+            if 'bert' not in args.arch:
                 # Visualize
                 suffix = f'(epoch {epoch}, epoch loss: {np.mean(epoch_loss):<.3f}, train)'
                 save_id = f'{args.contrastive_type[0]}-tr-e{epoch}-final'
