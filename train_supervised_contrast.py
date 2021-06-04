@@ -220,7 +220,7 @@ def train_epoch(encoder, classifier, dataloader,
             if scheduler_c is not None:
                 scheduler_c.step()
             optim_e.zero_grad()
-            
+
             if args.replicate > 50:
                 optim_c.zero_grad()
         

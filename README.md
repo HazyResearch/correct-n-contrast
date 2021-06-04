@@ -26,7 +26,6 @@ List of (installable) dependencies:
 * tqdm 4.54.0  
 * umap-learn 0.4.6
 
-
 ## Datasets and code 
 
 **Colored MNIST**: Running the command below should automatically download and setup the Colored MNIST dataset.  
