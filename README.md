@@ -12,6 +12,8 @@ conda activate cnc
 
 We also include a `requirements.txt` file for installing dependencies with `pip install -r requirements.txt`.
 
+We also include a `requirements.txt` file for installing dependencies with `pip install -r requirements.txt`.  
+
 List of (installable) dependencies:  
 * python 3.7.9  
 * matplotlib 3.3.2
