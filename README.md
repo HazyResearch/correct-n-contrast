@@ -1,4 +1,5 @@
 # Code for Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations
+This folder contains code for our NeurIPS 2021 submission.  
 
 This folder contains code for our NeurIPS 2021 submission.
 
@@ -9,7 +10,7 @@ To install requirements, we recommend setting up a virtual environment with cond
 ```setup
 conda env create -f environment.yml  
 conda activate cnc
-```  
+``` 
 
 We also include a `requirements.txt` file for installing dependencies with `pip install -r requirements.txt`.
 
