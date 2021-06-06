@@ -18,7 +18,8 @@ def initialize_data(args):
     visualize_dataset = getattr(dataset_module, 'visualize_dataset')
     
     if 'waterbirds' in args.dataset:
-        args.root_dir = './datasets/data/Waterbirds/'
+        args.root_dir = '../slice-and-dice-smol/datasets/data/Waterbirds/'
+        # args.root_dir = './datasets/data/Waterbirds/'
         args.target_name = 'waterbird_complete95'
         args.confounder_names = ['forest2water2']
         args.image_mean = np.mean([0.485, 0.456, 0.406])
