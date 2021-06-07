@@ -68,6 +68,16 @@ def initialize_data(args):
         args.image_path = './images/civilcomments/'
         args.train_classes = ['non_toxic', 'toxic']
         args.max_token_length = 300
+        
+    elif 'cxr' in args.dataset:
+        args.root_dir = '/dfs/scratch1/ksaab/data/4tb_hdd/CXR'
+        args.target_name = 'pmx'
+        args.confounder_names = ['chest_tube']
+        args.image_mean = 0.48865
+        args.image_std = 0.24621
+        args.augment_data = False
+        args.image_path = './images/cxr/'
+        args.train_classes = ['no_pmx', 'pmx']
     
     args.task = args.dataset  # e.g. 'civilcomments', for BERT
     args.num_classes = len(args.train_classes)
@@ -170,7 +180,14 @@ def get_resampled_set(dataset, resampled_set_indices, copy_dataset=False):
             resampled_set.data = resampled_set.data[resampled_set_indices]
         except AttributeError:
             pass
+        
+        try:  # Depending on the dataset these are responsible for the X features
+            resampled_set.filename_array = resampled_set.filename_array[resampled_set_indices]
+        except:
+            pass
     
     for target_type, target_val in resampled_set.targets_all.items():
         resampled_set.targets_all[target_type] = target_val[resampled_set_indices]
+        
+    print('len(resampled_set.targets)', len(resampled_set.targets))
     return resampled_set
