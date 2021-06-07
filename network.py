@@ -180,7 +180,7 @@ def save_checkpoint(model, optim, loss, epoch, batch, args,
     if retrain_epoch is not None:
         epoch = f'{epoch}-cpre={retrain_epoch}'
     cpb_str = f'-cpb={batch}' if batch is not None else ''
-    fname = f'cp-{args.experiment_name}-cpe={epoch}{cpb_str}.pth.tar'
+    fname = f'cp-{args.experiment_name}-cpe={epoch}{cpb_str}.pt'  # h.tar'
     
     if identifier is not None:
         fname = fname.replace('cp-', f'cp-{identifier}-')

@@ -252,6 +252,7 @@ def plot_umap(embeddings, dataset, label_type, num_data=None, method='umap',
 #         sample_ix = np.arange(0, len(embeddings), 
 #                               int(len(embeddings) / num_data))
         np.random.seed(args.seed)
+        num_data = np.min((num_data, len(embeddings)))
         sample_ix = np.random.choice(np.arange(len(embeddings)),
                                      size=num_data, replace=False)
         embeddings = embeddings[sample_ix]

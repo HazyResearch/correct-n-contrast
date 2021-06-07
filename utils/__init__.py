@@ -203,6 +203,8 @@ def init_args(args):
 def update_args(args):
     args.experiment_name = f'{args.contrastive_type}'
     
+    model_params_s = f'-spur-me={args.max_epoch_s}-bst={args.bs_trn_s}-lr={args.lr_s}-mo={args.momentum_s}-wd={args.weight_decay_s}-sts={args.spurious_train_split}'
+    
     if args.dataset == 'colored_mnist':
         args.experiment_name += f'-cmnist_p{args.p_correlation}-bs_trn_s={args.bs_trn_s}'
     else:
@@ -255,6 +257,7 @@ def update_args(args):
         model_params += f'-clrs={args.lr_scheduler[:3]}'
     
     args.experiment_name += model_params
+    args.experiment_name += model_params_s
 
     args.experiment_name += f'-s={args.seed}-r={args.replicate}'
     print(f'Updated experiment name: {args.experiment_name}')
@@ -309,6 +312,9 @@ def update_contrastive_experiment_name(args):
         training_params += '-FC'
     if args.clip_grad_norm:
         training_params += '-cg'
+        
+        
+        
     args.experiment_name += f'{training_params}-s={args.seed}-r={args.replicate}'
     args.experiment_name = args.experiment_name.replace('True', '1').replace('False', '0')
     args.experiment_name = args.experiment_name.replace('0.0001', '1e_4')
