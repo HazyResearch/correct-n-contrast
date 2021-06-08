@@ -4,7 +4,7 @@ CXR8 Dataset
 - Modified from https://github.com/nimz/stratification/blob/master/datasets/cxr.py
 
 Example command:
-python train_supervised_contrast.py --dataset cxr --arch resnet50_pt --train_encoder --pretrained_spurious_path "" --optim sgd --lr_s 1e-4 --momentum_s 0 --weight_decay_s 1e-4 --bs_trn_s 32 --max_epoch_s 50 --num_anchor 64 --num_positive 64 --num_negative 64 --num_negative_easy 64 --batch_factor 32 --lr 1e-4 --momentum 0.9 --weight_decay 1e-1 --weight_decay_c 1e-4 --target_sample_ratio 1 --temperature 0.05 --max_epoch 15 --no_projection_head --contrastive_weight 0.75 --log_visual_interval 10000 --checkpoint_interval 10000 --verbose --log_loss_interval 10 --replicate 42 --seed 42 --resample_class subsample
+python train_supervised_contrast.py --dataset cxr --arch resnet50_pt --train_encoder --pretrained_spurious_path "" --optim sgd --lr_s 1e-4 --momentum_s 0 --weight_decay_s 1e-4 --bs_trn_s 32 --max_epoch_s 50 --num_anchor 64 --num_positive 64 --num_negative 64 --num_negative_easy 64 --batch_factor 32 --lr 1e-4 --momentum 0.9 --weight_decay 1e-4 --weight_decay_c 1e-4 --target_sample_ratio 1 --temperature 0.05 --max_epoch 15 --no_projection_head --contrastive_weight 0.75 --log_visual_interval 10000 --checkpoint_interval 10000 --verbose --log_loss_interval 10 --replicate 42 --seed 42 --resample_class subsample
 """
 import os
 import numpy as np
