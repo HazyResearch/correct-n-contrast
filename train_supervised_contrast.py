@@ -221,6 +221,7 @@ def train_epoch(encoder, classifier, dataloader,
                 scheduler_c.step()
             optim_e.zero_grad()
 
+            # Experimenting with classifier accumulated gradient
             if args.replicate > 50:
                 optim_c.zero_grad()
         
