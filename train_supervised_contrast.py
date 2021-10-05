@@ -139,8 +139,7 @@ def train_epoch(encoder, classifier, dataloader,
                     loss = contrastive_loss(encoder, contrastive_batch)
                     loss *= ((1 - supervised_weight) / 
                              (len(inputs_a_) * len(batch_inputs)))
-                    
-
+                    loss = loss.mean()
                     loss.backward()
                     contrastive_batch = contrastive_batch.detach().cpu()
 
