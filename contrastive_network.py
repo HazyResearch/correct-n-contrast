@@ -11,7 +11,9 @@ from transformers import BertForSequenceClassification, BertConfig
 from transformers import AdamW, get_linear_schedule_with_warmup
 
 from utils import free_gpu
-from network import CNN, MLP, get_output
+from network import CNN, MLP, get_output  
+
+from resnet import *
 
 
 def load_encoder_state_dict(model, state_dict, contrastive_train=False):
@@ -65,8 +67,7 @@ class ContrastiveNet(nn.Module):
         try:
             if 'resnet50' in model_name:
                 # model_name = 'resnet50'
-                model = models.resnet50(
-                    pretrained=self.pretrained)
+                model = resnet50(pretrained=self.pretrained)
                 d = model.fc.in_features
                 model.fc = nn.Linear(d, self.num_classes)
                 self.activation_layer = 'backbone.avgpool'

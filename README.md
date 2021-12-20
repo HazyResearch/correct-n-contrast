@@ -1,5 +1,22 @@
-# Code for Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations
-This folder contains code for our NeurIPS 2021 submission.  
+# Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations
+This repository contains code for Correct-N-Contrast (CNC).   
+
+** Update 12/20/21 **
+Implementing an alternative version where the contrastive loss is applied over randomly sampled minibatches (as would be done with standard training, vs sampling (anchor, positive, negative) triplets first).  
+
+Sample commands to run:    
+
+Waterbirds    
+```
+python main_v2.py --dataset waterbirds --arch resnet50_pt --pretrained_spurious_path "./model/waterbirds/waterbirds_erm_regularized.pt" --resample_by_group upsample --bs_trn 128 --batch_factor 32 --optim sgd --lr 1e-4 --momentum 0.9 --weight_decay 1e-3 --weight_decay_c 1e-3 --temperature 0.1 --max_epoch 300 --no_projection_head --contrastive_weight 0.75 --verbose --replicate 42 --seed 42 --slice_with true
+```
+
+CelebA  
+```
+python main_v2.py --dataset celebA --arch resnet50_pt --pretrained_spurious_path "./model/celebA/celeba_erm_regularized.pt" --resample_by_group upsample --bs_trn 128 --batch_factor 32 --optim sgd --lr 1e-4 --momentum 0.9 --weight_decay 1e-1 --weight_decay_c 1e-3 --temperature 0.1 --max_epoch 50 --no_projection_head --contrastive_weight 0.75 --verbose --replicate 42 --seed 42 --slice_with true
+```
+
+The above currently run with stage 1 model predictions perfectly matching the spurious attribute labels. I need to test / debug the upsampling based on predictions by the stage 1 model.
 
 ## Requirements
 
@@ -9,8 +26,6 @@ To install requirements, we recommend setting up a virtual environment with cond
 conda env create -f environment.yml  
 conda activate cnc
 ``` 
-
-We also include a `requirements.txt` file for installing dependencies with `pip install -r requirements.txt`.
 
 We also include a `requirements.txt` file for installing dependencies with `pip install -r requirements.txt`.  
 

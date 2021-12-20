@@ -40,7 +40,8 @@ def initialize_data(args):
         # args.train_classes = args.train_classes
     
     elif 'celebA' in args.dataset:
-        args.root_dir = './datasets/data/CelebA/'
+        # args.root_dir = './datasets/data/CelebA/'  
+        args.root_dir = '/dfs/scratch0/nims/CelebA/celeba/'
         # IMPORTANT - dataloader assumes that we have directory structure
         # in ./datasets/data/CelebA/ :
         # |-- list_attr_celeba.csv

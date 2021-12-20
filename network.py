@@ -14,6 +14,8 @@ from collections import OrderedDict
 from transformers import BertForSequenceClassification, BertConfig
 from transformers import AdamW, get_linear_schedule_with_warmup
 
+from resnet import *
+
 
 def get_net(args, pretrained=None):
     """
@@ -34,9 +36,13 @@ def get_net(args, pretrained=None):
     elif 'resnet' in args.arch:
         if 'resnet50' in args.arch:
             pretrained = True if '_pt' in args.arch else False
-            net = torchvision.models.resnet50(pretrained=pretrained)
+            # net = torchvision.models.resnet50(pretrained=pretrained)
+            # d = net.fc.in_features
+            # net.fc = nn.Linear(d, args.num_classes)
+            net = resnet50(pretrained=pretrained)
             d = net.fc.in_features
             net.fc = nn.Linear(d, args.num_classes)
+            net.activation_layer = 'avgpool'
         elif args.arch == 'resnet34':
             pretrained = True if '_pt' in args.arch else False
             net = torchvision.models.resnet34(pretrained=pretrained)
