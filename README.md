@@ -1,6 +1,6 @@
 # Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations
 
-![Correct-N-Contrast](assets/cnc_pull_figure.jpg?raw=true "Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations")
+![Correct-N-Contrast](./assets/cnc_pull_figure.png?raw=true "Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations")
 
 This repository contains code for Correct-N-Contrast (CNC).   
 
