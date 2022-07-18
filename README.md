@@ -2,7 +2,8 @@
 
 ![Correct-N-Contrast](./assets/cnc_pull_figure.png?raw=true "Correct-N-Contrast: a Contrastive Approach for Improving Robustness to Spurious Correlations")
 
-This repository contains code for Correct-N-Contrast (CNC).   
+This repository contains code for Correct-N-Contrast (CNC), presented at ICML 2022.  
+- Paper link: [https://arxiv.org/abs/2203.01517](https://arxiv.org/abs/2203.01517)  
 
 ## Requirements
 
@@ -51,7 +52,7 @@ List of (installable) dependencies:
 
 ## Training and Evaluation  
 
-For all datasets except Colored MNIST, running the below commands requires loading an initial trained ERM model, which we provide as part of our submission through download links below in the **Pre-trained Models** section. The training for these models is as described in Appendix D.2.2. We recommend downloading as training the initial ERM model can take a fair amount of time, e.g. ~1.5 hours for Waterbirds on a machine with 8 CPUs and 1 NVIDIA V100 GPU, and ~3 hours for CelebA on a machine with 32 CPUs and 4 NVIDIA V100 GPUs. Aside from the specific hyperparameters in Appendix D.2.2., training these ERM models also just involves standard mini-batch SGD with the dataset labels.
+For all datasets except Colored MNIST, running the below commands requires loading an initial trained ERM model, which we provide through download links below in the **Pre-trained Models** section. The training for these models is as described in the paper. We recommend downloading as training the initial ERM model can take a fair amount of time, e.g. ~1.5 hours for Waterbirds on a machine with 8 CPUs and 1 NVIDIA V100 GPU, and ~3 hours for CelebA on a machine with 32 CPUs and 4 NVIDIA V100 GPUs. Training these ERM models also just involves standard mini-batch SGD with the dataset labels.
 
 
 ### Colored MNIST  
@@ -104,9 +105,7 @@ python -W ignore train_supervised_contrast.py --dataset civilcomments --arch ber
 
 ## Pre-trained Models
 
-Both pretrained initial ERM models and the trained Correct-N-Contrast models are available to download [here](https://drive.google.com/drive/folders/1SqhrdhLbBCNmTqCEf9Xm5ib4iTnt5ncx?usp=sharing).
-
-ERM models were trained as described in Appendix D.2.2. Correct-N-Contrast models were trained as described in Appendix D.2.4.  
+Both pretrained initial ERM models and the trained Correct-N-Contrast models are available to download [here](https://drive.google.com/drive/folders/1SqhrdhLbBCNmTqCEf9Xm5ib4iTnt5ncx?usp=sharing). 
 
 Once downloaded, models should be moved to the following file paths:  
 
